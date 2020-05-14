@@ -1,0 +1,270 @@
+<template>
+    <div class="content">
+        <div class="loading" v-if="loading">
+            <div class="centerScreen">
+                <div class="spinner-grow text-dark" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <p>Please Select a video game:</p>
+                <div class="row offset-2">
+
+                    <div class=" col-6">
+                        <select class="custom-select" @change="selectGame($event)">
+                            <option v-for="(item, index) in result" :key="index" :value="index">{{item.gameCode}} </option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <select class="custom-select"  @change="selectChapter($event)">
+                            <option v-for="(item, index) in chapter" :key="index" :value="item">{{item}} </option>
+                        </select>
+                    </div>
+                </div>
+
+                <p style="margin-top: 10px;">Please select Option filter:</p>
+                <div>
+                    <div class="content">
+                        <div class="row offset-3">
+
+                            <div class="col-3">
+                                <button class="btn btn-dark">Filter</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--<p style="margin-top: 10px;">filter the events you want to visualize:</p>-->
+            </div>
+            <div class="col-6">
+                <strong>Description: </strong> {{description}}
+                <br>
+                <br>
+                <br>
+                <br>
+                <strong>Player Info: </strong>
+                <br>
+                N Students Play: {{NumPlay}}
+                <br>
+                Country:
+                <img v-for="(item, index) in flag" :key="index" :src="item.flag" :alt="item.name" class="flags">
+            </div>
+        </div>
+        <!--<div class="row m-3">
+            <div class="col-4">
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="customRadio1" name="customRadio" class="custom-control-input">
+                    <label class="custom-control-label" for="customRadio1">Show only multi-choice events</label>
+                </div>
+            </div>
+            <div class="col-4">
+
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="customRadio2" name="customRadio" class="custom-control-input">
+                    <label class="custom-control-label" for="customRadio2">Show temporal events</label>
+                </div>
+            </div>
+            <div class="col-4">
+
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="customRadio3" name="customRadio" class="custom-control-input">
+                    <label class="custom-control-label" for="customRadio3">Show specific event</label>
+                </div>
+            </div>
+        </div>-->
+        <div class="row" style="padding: 20px 0">
+            <div class="col-4">
+                <button class="btn btn-outline-primary" @click="back">Back</button>
+            </div>
+            <div class="col-4 text-center">
+                <button class="btn btn-outline-primary" @click="home">Home</button>
+            </div>
+            <div class="col-4 text-right">
+
+                <button class="btn btn-outline-primary" @click="next">Next</button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+
+    import  axios from "axios";
+
+    export default {
+        data: function(){
+            return {
+                loading: false,
+                result: [], //all data in the variable
+                country: null, //country
+                flag: [], //all flags
+                chapter:[],
+                description: null,
+                NumPlay: 0,
+                events: [
+                    'event 1',
+                    'event 2',
+                    'event 3',
+                    'event 4',
+                ],
+                selectedChapter: 'C1',
+                selectedGame: 'G1',
+                selectedGameVersion: 'v1',
+                type: this.$route.params.type,
+            };
+        },
+        mounted () {
+
+           /* //Get User ALl events druing initial load
+            axios
+                .get('http://torresquevedo.eui.upm.es:8883/data/descriptions/games?limit=20', { headers: { 'Accept': 'application/json', 'Authorization': 'Basic c2Fyb2FyOjEyMzQ=' } })
+                .then(response => {
+                    this.result = JSON.parse(response.request.response);
+                    this.result = this.result.games;
+                    this.loading = false;
+                    if(this.result.length > 0){
+                        this.loadGameData(0);
+                    }
+                });*/
+            this.$store.state.games = [
+                {
+                    "chapters": [
+                        "chapter 1",
+                        "chapter 2",
+                        "chapter 3"
+                    ],
+                    "countries": [
+                        "Spain",
+                        "Finland"
+                    ],
+                    "gameCode": "Game 1",
+                    "gameDescription": "Game were LGTBI content is discussed",
+                    "gameVersion": "v0.1",
+                    "numberPlayers": "60"
+                },
+                {
+                    "chapters": [
+                        "chapter 1",
+                        "chapter 2",
+                        "chapter 3"
+                    ],
+                    "countries": [
+                        "Spain",
+                        "Bangladesh"
+                    ],
+                    "gameCode": "Game 2",
+                    "gameDescription": "Game 2 were LGTBI content is discussed",
+                    "gameVersion": "v0.1",
+                    "numberPlayers": "40"
+                },
+                {
+                    "chapters": [
+                        "chapter 1",
+                        "chapter 2",
+                        "chapter 3",
+                        "chapter 4",
+                        "chapter 5",
+                    ],
+                    "countries": [
+                        "Spain",
+                        "Bangladesh"
+                    ],
+                    "gameCode": "Game 3",
+                    "gameDescription": "Game 2 were LGTBI content is discussed",
+                    "gameVersion": "v0.1",
+                    "numberPlayers": "40"
+                },
+
+            ];
+
+
+            this.result = this.$store.state.games;
+            this.$store.state.selectedData = this.result;
+            this.loading = false;
+            if(this.result.length > 0){
+                this.loadGameData(0);
+            }
+
+
+
+        },
+        methods: {
+            next(){
+
+                this.$router.push('/main/'+this.type+'/VideoGameSelection/'+this.selectedGame+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/MicroAnalysis');
+
+            },
+
+            home(){
+                this.$router.push('/main');
+            },
+
+            back(){
+                this.$router.push('/main');
+            },
+            selectChapter(event){
+                this.selectedChapter = event.target.value;
+            }
+            ,
+            selectGame(event){
+                this.loadGameData(event.target.value);
+            },
+            loadGameData(index){
+
+                this.description = this.result[index].gameDescription;
+                this.selectedGame = this.result[index].gameCode;
+                this.NumPlay = this.result[index].numberPlayers;
+                this.chapter = this.result[index].chapters;
+                this.selectedGameVersion = this.result[index].gameVersion;
+                this.selectedChapter = this.chapter[0];
+                this.country = this.result[index].countries;
+                this.flag = [];
+                for(var item in this.country){
+                    var name = this.country[item].trim().toLocaleLowerCase();
+
+                    axios.get('https://restcountries.eu/rest/v2/name/'+name).then(
+                        res => {
+                            var list = JSON.parse(res.request.response);
+                            this.flag.push(list[0]);
+                        }
+
+                    )
+                }
+            }
+        }
+    }
+</script>
+
+<style scoped lang="scss">
+    .flags{
+        width: 50px;
+        margin-right: 5px;
+    }
+    .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: #0000003d;
+        height: 100%;
+        width: 100%;
+        z-index: 99999;
+        .centerScreen {
+            position: fixed;
+            width: 100%;
+            transform: translate(50%, 50%);
+            height: 100%;
+            margin-left: -2.5rem;
+            margin-top: -2.5rem;
+
+            .spinner-grow {
+                width: 5rem;
+                height: 5rem;
+            }
+
+            .text-dark {
+                color: #e35219 !important;
+            }
+        }
+    }
+</style>

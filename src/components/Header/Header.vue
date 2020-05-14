@@ -18,17 +18,6 @@
                 </ul>
             </div>
         </nav>
-        <div class="container">
-            <div class="row">
-                <div class="col-6 col-md-6">
-                    <img src="@/assets/logo2.png" class="logo">
-                </div>
-                <div class="col-6 col-md-6 content">
-                    Welcome, <strong>Teacher1</strong>
-                    <button class="btn btn-res"> logout</button>
-                </div>
-            </div>
-        </div>
     </div>
 
 
@@ -37,28 +26,33 @@
 <script>
 
     export default {
-
+        props: {
+            login: {
+                type: Boolean
+            },
+            userName: {
+                type: String
+            },
+            userID: {
+                type: Number
+            }
+        },
+        methods: {
+            logout(){
+                this.$emit('loginInfo', {
+                    userName: null,
+                    login: false,
+                    userID: 0
+                });
+            }
+        }
     }
 </script>
 
 <style scoped lang="scss">
 
-    .logo{
-        width: 210px;
-    }
 
-    .content{
-        align-self: center;
-        text-align: right;
-        .btn-res{
-            border-radius: 0;
-            color: #fff;
-            background-color: #e35219;
-            border-color: #dc3545;
-            padding: 4px 16px;
-            margin-left: 10px;
-        }
-    }
+
     nav{
         background: #e35219;
         padding: 0;

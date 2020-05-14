@@ -1,44 +1,62 @@
 <template>
     <div class="container">
-
+        <div class="loading" v-if="loading">
+            <div class="centerScreen">
+                <div class="spinner-grow text-dark" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
         <div class="content">
             <p>You have selected:</p>
             <br/>
             <div class="row">
-                <div class=" col-3">
-                    <select class="custom-select" v-model="game" @change="selectGame($event)">
-                        <option v-for="(item, index) in result" :key="index" :value="item.gameCode">{{item.gameCode}} </option>
-                    </select>
-                </div>
                 <div class="col-3">
-                    <select class="custom-select" v-model="chapter"  @change="selectChapter($event)">
+                    <select class="custom-select" v-model="chapter" style="margin-left: 10px;" @change="changeChapter($event)">
                         <option v-for="(item, index) in chapters" :key="index" :value="item">{{item}} </option>
                     </select>
                 </div>
                 <div class="col-3">
-                    <select class="custom-select" @change="selectChoice($event)" style="margin-left: 10px;">
-                        <option selected value="choice">Multiple-choice</option>
-                        <option value="timed">Temporal</option>
-                        <!--<option value="xpe">A specific</option>-->
+                    <select class="custom-select" v-if="choice === 'choice'" v-model="gameevent" style="margin-left: 10px;" @change="changeEvent($event)">
+                        <option v-for="(item, index) in distinct_event" :key="index" :value="item">{{item}} </option>
+                    </select>
+
+                    <select class="custom-select" v-if="choice === 'timed'" v-model="gameevent" style="margin-left: 10px;" @change="changeEvent($event)">
+                        <option v-for="(item, index) in distinct_event_temp" :key="index" :value="item">{{item}} </option>
                     </select>
                 </div>
-                <div class="col-3">
-                    <button class="btn btn-outline-primary" @click="filter()">Filter</button>
-                    <button class="btn btn-success" style="margin-left: 10px" @click="loadData()">Submit</button>
-                </div>
+                <!--<div class="col-3">
+                    <button class="btn btn-outline-primary">Filter</button>
+                </div>-->
             </div>
+            <br/>
             <div class="row">
-                <div class="offset-2 col-7">
+                <div class="col-7">
                     <v-chart :options="chartData"/>
+                    <!--<img src="@/assets/image2.png" style="width: 100%;" alt="">-->
                 </div>
-                <div class="col-3">
-                    <ul class="eventlist" v-if="choice === 'choice'">
-                        <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}</li>
-                    </ul>
+                <div class="col-5">
+                    <strong>Event 4:</strong>
+                    <p>{{description}}</p>
 
-                    <ul class="eventlist" v-if="choice === 'timed'">
-                        <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item)"> {{item}}</li>
-                    </ul>
+                    <strong>Highlights:</strong>
+                   <p v-for="(item, index) in this.highlights" :key="index">{{item}}</p>
+                    <span v-if="choice === 'choice'">
+                    There are three possible answers:
+                    <br/>
+                    <div class="ans" v-for="(item,index, key) in AnswerList" :key="key">
+                        <p>- Answer 1: “{{item.name}}”.</p>
+                        <p>Selected by: {{item.percent}}%</p>
+                    </div>
+                    </span>
+                    <span v-if="choice === 'timed'">
+                    Statistics:
+
+                    <div class="ans">
+                        <p>Mean: {{mean_val}} secs.</p>
+                        <p>Std: {{std}}  secs.</p>
+                    </div>
+                    </span>
                 </div>
             </div>
         </div>
@@ -58,24 +76,29 @@
 </template>
 
 <script>
-//    import axois from "axios";
+    //import axios from "axios";
     import ECharts from 'vue-echarts'
     import 'echarts/lib/chart/bar'
     import 'echarts/lib/component/tooltip'
     import 'echarts-gl'
-    //import filterModel from "@/components/filterModel";
 
     export default {
         components: {
             'v-chart': ECharts
         },
-        data: function(){
+        data: function() {
+
             return {
+                result: null,
+                description: null,
+                highlights: [],
+                Answers: [],
+                Answers_tmp: [],
                 chartData: null,
-                Answers: [10, 20 , 50, 15, 50, 80, 25, 30, 80, 95],
-                choice: 'choice',
+                loading: true,
+                chapters: [],
+                choice: null,
                 decisions: [],
-                max_choice: 0,
                 distinct_event: [],
                 distinct_event_temp: [],
                 unique_decision_final:[],
@@ -84,16 +107,22 @@
                 game: null,
                 version: null,
                 chapter: null,
+                gameevent: null,
                 chartDATA: [],
-                result: [],
-                chapters: [],
-            }
+                AnswerList: [],
+                mean_val: 0,
+                std: 0,
+
+            };
         },
         mounted(){
 
             this.type = this.$route.params.type;
             this.game = this.$route.params.game;
+            this.gameevent = this.$route.params.event;
             this.chapter = this.$route.params.chapter;
+            this.choice = this.$route.params.choice;
+
 
             this.$store.state.games = [
                 {
@@ -146,39 +175,39 @@
 
             ];
 
+            let key = this.game;
+            this.result = this.$store.state.games;
+            let res = this.result.filter(
+                function(data){
+                    if(data.gameCode === key)
+                        return data
+                }
+            );
+            if(res.length > 0){
+                res = res[0];
+                this.chapters = res.chapters;
+                this.version = res.gameVersion;
+            }
 
-            this.loadData();
-            this.submitData();
-        }
-        ,
+
+           this.loadData();
+
+        },
         methods: {
             exportOpt(){
 
             },
-            home(){
-                this.$router.push('/main');
-            },
-            filter(){
-                this.$modal.show('filter');
-            }
-            ,
-            back(){
-                this.$router.push('/main/'+this.type+'/VideoGameSelection/');
-            },
-            selectGame(event){
-                this.game = event.target.value;
+            changeChapter(event){
+                this.chapter = event.target.value;
                 this.loadData();
             },
-            selectChoice(event){
-                this.choice = event.target.value;
-                this.barChartLoad();
-
+            changeEvent(event){
+                this.gameevent = event.target.value;
+                this.loadEvent();
             },
-            selectChapter(event){
-                this.chapter = event.target.value;
+            loadData(){
+                this.loading = true;
 
-            },
-            submitData(){
 
                 this.decisions = [
                     {
@@ -280,40 +309,73 @@
                     }
                 ];
 
+                this.result = {
+                    "eventCode": "e3",
+                    "eventDescription": "Seconds waiting for your friend",
+                    "eventType": "timed",
+                    "highlights": [ "H1 - Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,." ],
+                    "possibleChoices": [
+                        "10",
+                        "90"
+                    ]
+                };
+
                 this.dataAnalysis();
 
-                for(var i=0; i < this.unique_decision_final.length; i++ ) {
-                    this.chartDATA[i] = [];
-                    for(var x=0; x < this.max_choice; x++)
-                        this.chartDATA[i][x] = 0;
-                }
-                for(var p =0; p < this.unique_decision_final.length; p++){
-                    var list = this.unique_decision_final[p].choices;
-                    for(var j=0; j < list.length; j++) {
-                        this.chartDATA[j][p] = list[j].percent;
-                    }
-                }
-                this.barChartLoad();
+                this.highlights = this.result.highlights;
+                this.description = this.result.eventDescription;
+
+                this.loadEvent();
+
+                this.loading = false;
             },
-            loadData(){
-                let key = this.game;
-                this.result = this.$store.state.games;
-                let res = this.result.filter(
-                    function(data){
-                        if(data.gameCode === key)
-                            return data
+            home(){
+
+                this.$router.push('/main');
+            },
+            back(){
+                this.$router.push('/main/'+this.type+'/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis');
+            },
+            loadEvent(){
+                let key = this.gameevent;
+                if(this.choice === 'choice') {
+
+                    let viewEvent = this.unique_decision_final.filter(function (data) {
+                        if (data.eventCode === key)
+                            return data;
+                    });
+
+                    if (viewEvent.length > 0) {
+                        viewEvent = viewEvent[0];
+                        this.AnswerList = viewEvent.choices;
+                        this.Answers = [];
+                        for (let i = 0; i < this.AnswerList.length; i++) {
+                            this.Answers.push(this.AnswerList[i].percent);
+                        }
                     }
-                );
-                if(res.length > 0){
-                    res = res[0];
-                    this.chapters = res.chapters;
-                    this.version = res.gameVersion;
-                    //this.chapter = this.chapters[0];
+                }else{
+                    let viewEvent = this.unique_decision_final_temp.filter(function (data) {
+                        if (data.eventCode === key)
+                            return data;
+                    });
+
+                    if (viewEvent.length > 0) {
+                        viewEvent = viewEvent[0];
+                        this.Answers_tmp = [];
+                        for (let i = 0; i < viewEvent.choices.length; i++) {
+                            this.Answers_tmp.push(['s'+(i+1),viewEvent.choices[i]]);
+                        }
+                    }
+                    this.getMeanValue();
+                    this.getStd();
                 }
 
+                this.barChartLoad();
             },
             dataAnalysis(){
 
+                this.distinct_event = [];
+                this.distinct_event_temp = [];
                 let uniqueEventList = [];
                 let uniqueEventListTmp = [];
                 for(var i =0; i < this.decisions.length ; i++){
@@ -372,139 +434,71 @@
                 });
                 uniqueEventListTmp.forEach((value) => {
                     this.distinct_event_temp.push(value.eventCode);
-                    value.choices.forEach((ch) => {
-                        this.unique_decision_final_temp.push([value.eventCode, ch]);
-                    });
                 });
-
+                this.unique_decision_final_temp = uniqueEventListTmp;
                 this.unique_decision_final =  uniqueEventList;
-
-
-
             },
             barChartLoad(){
                 if(this.choice === 'choice') {
-                    var emphasisStyle = {
-                        itemStyle: {
-                            barBorderWidth: 1,
-                            shadowBlur: 10,
-                            shadowOffsetX: 0,
-                            shadowOffsetY: 0,
-                            shadowColor: 'rgba(0,0,0,0.5)'
-                        }
-                    };
+                    var dataAxis = [];
+                    var data = this.Answers;
+
+
+                    for (var i = 0; i < data.length; i++) {
+                        dataAxis.push('Answ ' + (i + 1));
+                    }
                     this.chartData = {
-                        backgroundColor: '#fff',
-
-
-                        tooltip: {
-                            formatter: function (params) {
-                                //console.log(params);
-                                return 'This Value is : ' + params.value + '%';
-                            }
-                        },
+                        tooltip: {},
                         xAxis: {
-                            data: this.distinct_event,
-                            axisLine: {onZero: true},
-                            splitLine: {show: true},
-                            splitArea: {show: false}
+                            data: dataAxis,
+
+                            axisTick: {
+                                show: false
+                            },
+                            axisLine: {
+                                show: false
+                            },
+                            z: 10
                         },
                         yAxis: {
                             max: 100,
-                            splitArea: {show: false}
+                            type: 'value',
+                            axisLine: {
+                                show: false
+                            },
+                            axisTick: {
+                                show: false
+                            },
+                            axisLabel: {
+                                textStyle: {
+                                    color: '#999'
+                                },
+                                formatter: '{value}%'
+                            }
                         },
+                        dataZoom: [
+                            {
+                                type: 'inside'
+                            }
+                        ],
                         series: [
                             {
-                                name: 'bar',
                                 type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[0]
-                            },
-                            {
-                                name: 'bar2',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[1]
-                            },
-                            {
-                                name: 'bar3',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[2]
-                            },
-                            {
-                                name: 'bar4',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[3]
-                            },
-                            {
-                                name: 'bar5',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[4]
-                            },
-                            {
-                                name: 'bar6',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[5]
-                            },
-                            {
-                                name: 'bar7',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[6]
-                            },
-                            {
-                                name: 'bar8',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[7]
-                            },
-                            {
-                                name: 'bar9',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[8]
-                            },
-                            {
-                                name: 'bar10',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[9]
-                            },
-                            {
-                                name: 'bar11',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[10]
-                            },
-                            {
-                                name: 'bar12',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                data: this.chartDATA[11]
+                                data: data
                             }
                         ]
-                    };
+                    }
                 }else{
+                    let xAxisData = [];
+                    this.Answers_tmp.forEach((value, index) => {
+                        xAxisData.push('s'+(index+1));
+                    });
+
                     this.chartData = {
+                        tooltip: {},
                         xAxis: {
                             scale: true,
-                            data: this.distinct_event_temp
+                            data: xAxisData
                         },
                         yAxis: {
                             scale: true,
@@ -514,39 +508,63 @@
                         series: [
                             {
                                 type: 'scatter',
-                                data: this.unique_decision_final_temp,
+                                data: this.Answers_tmp,
                             }
                         ]
                     };
                 }
             },
-            gotoEvent(value){
-                this.$router.push('/main/'+this.type+'/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis/' + value + '/'+this.choice+'/EventView');
+            getMeanValue(){
+                let sum = 0;
+                this.Answers_tmp.forEach((value) => {
+                    sum= sum + parseFloat(value[1]);
+                });
+                this.mean_val = (sum/this.Answers_tmp.length).toFixed(2);
+            },
+            getStd(){
+                let sum = 0;
+                this.Answers_tmp.forEach((value) => {
+                    let x = (parseFloat(value[1]) - this.mean_val);
+                    sum += (x*x);
+                });
+                this.std = (sum/(this.Answers_tmp.length - 1)).toFixed(2);
             }
         }
     }
 </script>
 
 <style scoped lang="scss">
-    .content{
-        margin: 50px 0;
-    .custom-control{
-        margin-top: 16px;
-    }
-    }
-    .eventlist{
-        list-style: none;
-        padding: 0;
-        margin: 50px 0;
-        li {
-            padding: 13px 20px;
-            background: #325973;
-            color: white;
-            border: 1px solid white;
-            cursor: pointer;
+    .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: #0000003d;
+        height: 100%;
+        width: 100%;
+        z-index: 99999;
+        .centerScreen {
+            position: fixed;
+            width: 100%;
+            transform: translate(50%, 50%);
+            height: 100%;
+            margin-left: -2.5rem;
+            margin-top: -2.5rem;
+
+            .spinner-grow {
+                width: 5rem;
+                height: 5rem;
+            }
+
+            .text-dark {
+                color: #e35219 !important;
+            }
         }
-        li:hover{
-            background: #848484;
+    }
+    .ans {
+        margin: 10px 0;
+        p {
+            padding: 0;
+            margin: 0;
         }
     }
 </style>

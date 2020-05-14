@@ -3,11 +3,11 @@
         <p>Please, select the type of analysis you want to perform:</p>
         <div>
             <div class="custom-control custom-radio">
-                <input type="radio" id="customRadio1" name="customRadio" class="custom-control-input">
+                <input type="radio" id="customRadio1" name="customRadio" v-model="selectedAnalysis" value="single" class="custom-control-input">
                 <label class="custom-control-label" for="customRadio1">Micro analysis (single group)</label>
             </div>
             <div class="custom-control custom-radio">
-                <input type="radio" id="customRadio2" name="customRadio" class="custom-control-input">
+                <input type="radio" id="customRadio2" name="customRadio" v-model="selectedAnalysis" value="group" class="custom-control-input">
                 <label class="custom-control-label" for="customRadio2">Macro analysis (two groups)</label>
             </div>
         </div>
@@ -17,23 +17,24 @@
             <div class="col-4 text-center">
             </div>
             <div class="col-4 text-right">
-                <button class="btn btn-outline-primary" @click="next">Next</button>
+                <button class="btn btn-outline-primary" :disabled="selectedAnalysis === null" @click="next">Next</button>
             </div>
         </div>
     </div>
 </template>
 
 <script>
+
     export default {
-        props: {
-            pageNum: {
-                type: Number
-            }
+        data: function() {
+          return {
+              selectedAnalysis: null,
+          };
         },
         methods: {
 
             next(){
-                this.$emit('PageNumber', this.pageNum+1);
+                this.$router.push('/main/'+this.selectedAnalysis+'/VideoGameSelection');
             }
         }
     }

@@ -42,14 +42,7 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-4">
-                <button class="btn btn-outline-primary" @click="back">Back</button>
-            </div>
-            <div class="col-4 text-center">
-                <button class="btn btn-outline-primary" @click="home">Home</button>
-            </div>
-        </div>
+
     </div>
 </template>
 
@@ -60,16 +53,7 @@
                 type: Number
             }
         },
-        methods: {
 
-            home(){
-                this.$emit('PageNumber', 0);
-            },
-
-            back(){
-                this.$emit('PageNumber', this.pageNum-1);
-            }
-        }
     }
 </script>
 
