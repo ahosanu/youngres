@@ -22,7 +22,7 @@
             </div>
             <div class="row">
                 <div class="col-4">
-                    <img src="@/assets/image1.png" alt="">
+                    <!--<img src="@/assets/image1.png" alt="">-->
                 </div>
                 <div class="col-8">
                     <strong>Description:</strong> Here comes a description of the selected

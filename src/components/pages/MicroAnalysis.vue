@@ -24,7 +24,7 @@
                 </div>
                 <div class="col-3">
                     <button class="btn btn-outline-primary" @click="filter()">Filter</button>
-                    <button class="btn btn-success" style="margin-left: 10px" @click="loadData()">Submit</button>
+                    <button class="btn btn-success" style="margin-left: 10px" @click="submitData()">Submit</button>
                 </div>
             </div>
             <div class="row">
@@ -50,7 +50,6 @@
                 <button class="btn btn-outline-primary" @click="home">Home</button>
             </div>
             <div class="col-4 text-right">
-
                 <button class="btn btn-outline-primary" @click="exportOpt">Export</button>
             </div>
         </div>
@@ -153,15 +152,14 @@
         ,
         methods: {
             exportOpt(){
-
+                window.print();
             },
             home(){
                 this.$router.push('/main');
             },
             filter(){
                 this.$modal.show('filter');
-            }
-            ,
+            },
             back(){
                 this.$router.push('/main/'+this.type+'/VideoGameSelection/');
             },
@@ -179,7 +177,7 @@
 
             },
             submitData(){
-
+                this.chartDATA = [];
                 this.decisions = [
                     {
                         "choice": "cat",
@@ -249,31 +247,31 @@
                     },
 
                     {
-                        "choice": "90",
+                        "choice": Math.random()* 100,
                         "eventCode": "e3",
                         "eventDescription": "Seconds waiting for your friend",
                         "eventType": "timed"
                     },
                     {
-                        "choice": "10",
+                        "choice": Math.random() * 100,
                         "eventCode": "e3",
                         "eventDescription": "Seconds waiting for your friend",
                         "eventType": "timed"
                     },
                     {
-                        "choice": "90",
+                        "choice": Math.random() * 100,
                         "eventCode": "e3",
                         "eventDescription": "Seconds waiting for your friend",
                         "eventType": "timed"
                     },
                     {
-                        "choice": "5",
+                        "choice": Math.random() * 100,
                         "eventCode": "e4",
                         "eventDescription": "3rd waiting for your friend",
                         "eventType": "timed"
                     },
                     {
-                        "choice": "10",
+                        "choice": Math.random() * 100,
                         "eventCode": "e4",
                         "eventDescription": "3rd waiting for your friend",
                         "eventType": "timed"
@@ -290,7 +288,7 @@
                 for(var p =0; p < this.unique_decision_final.length; p++){
                     var list = this.unique_decision_final[p].choices;
                     for(var j=0; j < list.length; j++) {
-                        this.chartDATA[j][p] = list[j].percent;
+                        this.chartDATA[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
                     }
                 }
                 this.barChartLoad();
@@ -313,9 +311,14 @@
 
             },
             dataAnalysis(){
-
+                this.distinct_event = [];
+                this.distinct_event_temp = [];
                 let uniqueEventList = [];
                 let uniqueEventListTmp = [];
+                this.unique_decision_final_temp = [];
+                this.unique_decision_final = [];
+
+
                 for(var i =0; i < this.decisions.length ; i++){
                     var item = this.decisions[i];
                     if(item.eventType === 'choice') {
@@ -324,6 +327,7 @@
                             uniqueEventList.push(
                                 {
                                     'eventCode': item.eventCode,
+                                    'description': item.eventDescription,
                                     'totalChoice': 1,
                                     'choices': [
                                         {
@@ -353,6 +357,7 @@
                             uniqueEventListTmp.push(
                                 {
                                     'eventCode': item.eventCode,
+                                    'description': item.eventDescription,
                                     'choices': [item.choice]
                                 });
                         }else{
@@ -373,7 +378,7 @@
                 uniqueEventListTmp.forEach((value) => {
                     this.distinct_event_temp.push(value.eventCode);
                     value.choices.forEach((ch) => {
-                        this.unique_decision_final_temp.push([value.eventCode, ch]);
+                        this.unique_decision_final_temp.push([value.eventCode, ch, value.description]);
                     });
                 });
 
@@ -399,10 +404,12 @@
 
                         tooltip: {
                             formatter: function (params) {
-                                //console.log(params);
-                                return 'This Value is : ' + params.value + '%';
+                                return 'Answer: “'+params.data.key+'” <br/>Selected by: '+
+                                    params.value+'% of the students';
                             }
                         },
+                        calculable: true
+                        ,
                         xAxis: {
                             data: this.distinct_event,
                             axisLine: {onZero: true},
@@ -411,7 +418,10 @@
                         },
                         yAxis: {
                             max: 100,
-                            splitArea: {show: false}
+                            splitArea: {show: false},
+                            axisLabel:{
+                                formatter: '{value}%'
+                            }
                         },
                         series: [
                             {
@@ -509,7 +519,40 @@
                         yAxis: {
                             scale: true,
                             min: 0,
-                            max: 100
+                            max: 100,
+                            axisLabel:{
+                                formatter: '{value} Secs'
+                            }
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer:{
+                                type: 'shadow'
+                            },
+                            formatter: function (params) {
+                                console.log(params);
+                                let sum =0;
+                                let mean;
+                                let std;
+                                let Event;
+                                let description;
+
+                                params.forEach((value) => {
+                                    sum = sum + parseFloat(value.data[1]);
+                                    description = value.data[2];
+                                    Event = value.name;
+                                });
+                                mean = (sum / params.length ).toFixed(2);
+
+                                sum = 0;
+                                params.forEach((value) => {
+                                    let x = (parseFloat(value.data[1]) - mean);
+                                    sum = sum + (x*x);
+                                });
+                                std = sum / (params.length - 1);
+
+                                return Event+' : '+description+'<br/>Avg: ' + mean + 'secs.<br/>Std: ' + std.toFixed(2)+'secs.';
+                            }
                         },
                         series: [
                             {

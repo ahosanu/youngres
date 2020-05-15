@@ -22,7 +22,7 @@ export default new Vuex.Store({
         login: (state, payload) => {
 
             if(payload.user === 'admin' && payload.password === '12345') {
-                state.userName = 'Ahosan';
+                state.userName = 'Teacher 1';
                 state.token = 'Basic c2Fyb2FyOjEyMzQ=';
                 state.alert = false;
                 axios.defaults.headers.common['Authorization'] = state.token;
@@ -50,7 +50,7 @@ export default new Vuex.Store({
                 router.push('login');
                 return
             }
-            commit('updateSession', {user: 'Ahosan', token: token});
+            commit('updateSession', {user: 'Teacher 1', token: token});
         }
     },
     getters: {

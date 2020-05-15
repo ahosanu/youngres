@@ -195,7 +195,7 @@
         },
         methods: {
             exportOpt(){
-
+                window.print();
             },
             changeChapter(event){
                 this.chapter = event.target.value;
@@ -503,7 +503,10 @@
                         yAxis: {
                             scale: true,
                             min: 0,
-                            max: 100
+                            max: 100,
+                            axisLabel:{
+                                formatter: '{value} Secs'
+                            }
                         },
                         series: [
                             {
