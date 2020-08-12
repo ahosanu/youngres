@@ -9,6 +9,7 @@ import VideoGameSelection from "@/components/pages/VideoGameSelection";
 import ViewComponent from "@/components/ViewComponent";
 import MicroAnalysis from "@/components/pages/MicroAnalysis";
 import EventView from "@/components/pages/EventView";
+import ChapterInfo from "@/components/pages/ChapterInfo";
 
 export default new VueRouter({
     mode: 'history',
@@ -49,6 +50,10 @@ export default new VueRouter({
                         {
                             path: '',
                             component:  VideoGameSelection,
+                        },
+                        {
+                            path: ':game/:chapter/:version/ChapterInfo',
+                            component: ChapterInfo,
                         },
                         {
                             path: ':game/:chapter/:version/MicroAnalysis',

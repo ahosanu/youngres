@@ -22,7 +22,7 @@
             </div>
             <div class="row">
                 <div class="col-4">
-                    <!--<img src="@/assets/image1.png" alt="">-->
+                    <img src="@/assets/image1.png" alt="">
                 </div>
                 <div class="col-8">
                     <strong>Description:</strong> Here comes a description of the selected
@@ -40,6 +40,15 @@
                     the results of the students.
                 </div>
             </div>
+
+            <div class="row" style="padding: 20px 0">
+                <div class="col-4">
+                    <button class="btn btn-outline-primary" @click="back">Back</button>
+                </div>
+                <div class="col-4 text-center">
+                    <button class="btn btn-outline-primary" @click="home">Home</button>
+                </div>
+            </div>
         </div>
 
 
@@ -48,11 +57,29 @@
 
 <script>
     export default {
-        props: {
-            pageNum: {
-                type: Number
+        data: function(){
+            return {
+                type: null,
+                game: null,
+                version: null,
+                chapter: null,
+                chapters: [],
             }
         },
+        mounted() {
+
+            this.type = this.$route.params.type;
+            this.game = this.$route.params.game;
+            this.chapter = this.$route.params.chapter;
+        },
+        methods:{
+            home(){
+                this.$router.push('/main');
+            },
+            back(){
+                this.$router.push('/main/'+this.type+'/VideoGameSelection/');
+            },
+        }
 
     }
 </script>

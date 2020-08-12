@@ -8,19 +8,22 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-6">
+            <div class="col-8">
                 <p>Please Select a video game:</p>
-                <div class="row offset-2">
+                <div class="row">
 
-                    <div class=" col-6">
+                    <div class=" col-4">
                         <select class="custom-select" @change="selectGame($event)">
                             <option v-for="(item, index) in result" :key="index" :value="index">{{item.gameCode}} </option>
                         </select>
                     </div>
-                    <div class="col-6">
+                    <div class="col-4">
                         <select class="custom-select"  @change="selectChapter($event)">
                             <option v-for="(item, index) in chapter" :key="index" :value="item">{{item}} </option>
                         </select>
+                    </div>
+                    <div class="col-4">
+                       <button class="btn btn-dark" @click="chapterInfo()">View Chapter Info</button>
                     </div>
                 </div>
 
@@ -37,7 +40,7 @@
                 </div>
                 <!--<p style="margin-top: 10px;">filter the events you want to visualize:</p>-->
             </div>
-            <div class="col-6">
+            <div class="col-4">
                 <strong>Description: </strong> {{description}}
                 <br>
                 <br>
@@ -193,6 +196,11 @@
             next(){
 
                 this.$router.push('/main/'+this.type+'/VideoGameSelection/'+this.selectedGame+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/MicroAnalysis');
+
+            },
+            chapterInfo(){
+
+                this.$router.push('/main/'+this.type+'/VideoGameSelection/'+this.selectedGame+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/ChapterInfo');
 
             },
 
