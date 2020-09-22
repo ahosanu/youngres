@@ -11,7 +11,9 @@ export default new Vuex.Store({
         token: null,
         alert: false,
         selectedData: [],
-        games: []
+        games: [],
+        filter: [],
+        filterStudent: []
     },
     mutations: {
         logout: state => {

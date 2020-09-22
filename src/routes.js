@@ -10,6 +10,10 @@ import ViewComponent from "@/components/ViewComponent";
 import MicroAnalysis from "@/components/pages/MicroAnalysis";
 import EventView from "@/components/pages/EventView";
 import ChapterInfo from "@/components/pages/ChapterInfo";
+import MacroAnalysis from "@/components/pages/MacroAnalysis";
+import GroupEventView from "@/components/pages/GroupEventView";
+import VideoGameSelectionGroup from "@/components/pages/VideoGameSelectionGroup";
+import ChapterInfoGroup from "@/components/pages/ChapterInfoGroup";
 
 export default new VueRouter({
     mode: 'history',
@@ -44,7 +48,7 @@ export default new VueRouter({
                     component:  Home,
                 },
                 {
-                    path: ':type/VideoGameSelection',
+                    path: 'single/VideoGameSelection',
                     component:  ViewComponent,
                     children: [
                         {
@@ -70,11 +74,40 @@ export default new VueRouter({
                             ]
                         }
                     ]
+                },
+                {
+                    path: 'group/VideoGameSelection',
+                    component:  ViewComponent,
+                    children: [
+                        {
+                            path: '',
+                            component:  VideoGameSelectionGroup,
+                        },
+                        {
+                            path: ':game/:chapter/:version/ChapterInfo',
+                            component: ChapterInfoGroup,
+                        },
+                        {
+                            path: ':game/:chapter/:version/:groupOne/:groupTwo/MacroAnalysis',
+                            component: ViewComponent,
+                            children: [
+                                {
+                                    path: '',
+                                    component:  MacroAnalysis,
+                                },
+                                {
+                                    path: ':event/:choice/EventView',
+                                    component:  GroupEventView,
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
 
 
         },
+
         {
             path: '*', redirect: '/login'
         }

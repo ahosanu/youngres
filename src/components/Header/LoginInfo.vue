@@ -23,6 +23,10 @@
 </script>
 
 <style scoped lang="scss">
+
+    .container{
+        margin-bottom: 40px;
+    }
     .logo{
         width: 210px;
     }

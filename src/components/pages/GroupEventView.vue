@@ -32,26 +32,29 @@
       <div class="row">
         <div class="col-7">
           <v-chart :options="chartData"/>
-          <!--<img src="@/assets/image2.png" style="width: 100%;" alt="">-->
         </div>
         <div class="col-5">
           <strong>{{gameevent}}:</strong>
           <p>{{description}}</p>
 
+
+
           <strong>Highlights:</strong>
           <p v-for="(item, index) in this.highlights" :key="index">{{item}}</p>
+
           <span v-if="choice === 'choice'">
-            <strong>Possible Choices:</strong>
+             <strong>Possible Choices:</strong>
           <ul>
             <li v-for="item in possibleChoices" :key="item">
               {{item}}
             </li>
           </ul>
-                        <strong>There are three possible answers:</strong>
+            <strong>Student selected decision:</strong>
                     <br/>
                     <div class="ans" v-for="(item,index, key) in AnswerList" :key="key">
                         <p>- Answer 1: “{{item.name}}”.</p>
-                        <p>Selected by: {{item.percent}}%</p>
+                        <p>{{groupOne}} Selected by: {{item.percent}}%</p>
+                        <p>{{groupTwo}} Selected by: {{item.percent}}%</p>
                     </div>
                     </span>
           <span v-if="choice === 'timed'">
@@ -116,7 +119,9 @@ export default {
       AnswerList: [],
       mean_val: 0,
       std: 0,
-      possibleChoices: [],
+      groupOne: null,
+      groupTwo: null,
+      possibleChoice: [],
     };
   },
   mounted(){
@@ -129,7 +134,8 @@ export default {
 
 
 
-
+    this.groupOne = this.$route.params.groupOne;
+    this.groupTwo = this.$route.params.groupTwo;
 
 
     axios.get('descriptions/games')
@@ -192,17 +198,6 @@ export default {
 
       });
 
-      /* this.result = {
-           "eventCode": "e3",
-           "eventDescription": "Seconds waiting for your friend",
-           "eventType": "timed",
-           "highlights": [ "H1 - Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,." ],
-           "possibleChoices": [
-               "10",
-               "90"
-           ]
-       };*/
-
 
 
 
@@ -213,7 +208,8 @@ export default {
       this.$router.push('/main');
     },
     back(){
-      this.$router.push('/main/single/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis');
+
+      this.$router.push('/main/group/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/'+ this.groupOne +'/'+ this.groupTwo +'/MacroAnalysis');
     },
     loadEvent(){
       let key = this.gameevent;
@@ -362,7 +358,15 @@ export default {
           ],
           series: [
             {
+              name: this.groupOne,
               type: 'bar',
+              barWidth: 20,
+              data: data
+            },
+            {
+              name: this.groupTwo,
+              type: 'bar',
+              barWidth: 20,
               data: data
             }
           ]
@@ -387,8 +391,16 @@ export default {
               formatter: '{value} Secs'
             }
           },
+          legend: {},
           series: [
             {
+              name: this.groupOne,
+              symbolSize: 20,
+              type: 'scatter',
+              data: this.Answers_tmp,
+            },
+            {
+              name: this.groupTwo,
               type: 'scatter',
               data: this.Answers_tmp,
             }

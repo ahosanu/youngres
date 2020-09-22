@@ -17,7 +17,7 @@
             <div class="col-4 text-center">
             </div>
             <div class="col-4 text-right">
-                <button class="btn btn-outline-primary" :disabled="selectedAnalysis === null" @click="next">Next</button>
+                <button class="btn btn-primary" :disabled="selectedAnalysis === null" @click="next">Next</button>
             </div>
         </div>
     </div>
@@ -41,6 +41,11 @@
 </script>
 
 <style scoped lang="scss">
+    .btn-primary{
+        padding: 4px 19px;
+        background: #e35219;
+        border: 0;
+    }
     .content{
         margin: 50px 0;
         .custom-control{

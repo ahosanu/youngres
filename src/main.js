@@ -28,9 +28,9 @@ import router from './routes';
 import store from './store';
 
 
-axios.defaults.baseURL = 'http://torresquevedo.eui.upm.es:8883/data/';
+axios.defaults.baseURL = 'http://demo2348564.mockable.io/';
 axios.defaults.headers.get['accept'] = 'application/json';
-
+axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 
 library.add( faTwitter );
 library.add( faLinkedinIn );

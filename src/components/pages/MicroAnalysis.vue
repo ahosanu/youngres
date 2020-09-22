@@ -1,9 +1,14 @@
 <template>
     <div class="container">
-
+      <div class="loading" v-if="loading">
+        <div class="centerScreen">
+          <div class="spinner-grow text-dark" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </div>
         <div class="content">
-            <p>You have selected:</p>
-            <br/>
+            <p class="title">You have selected:</p>
             <div class="row">
                 <div class=" col-3">
                     <select class="custom-select" v-model="game" @change="selectGame($event)">
@@ -23,13 +28,13 @@
                     </select>
                 </div>
                 <div class="col-3">
-                    <button class="btn btn-outline-primary" @click="filter()">Filter</button>
+                    <button class="btn btn-primary" @click="filter()">Filter</button>
                     <button class="btn btn-success" style="margin-left: 10px" @click="submitData()">Submit</button>
                 </div>
             </div>
             <div class="row">
-                <div class="offset-2 col-7">
-                    <v-chart :options="chartData"/>
+                <div class="col-9">
+                    <v-chart :options="chartData" width="100%"/>
                 </div>
                 <div class="col-3">
                     <ul class="eventlist" v-if="choice === 'choice'">
@@ -44,13 +49,13 @@
         </div>
         <div class="row" style="padding: 20px 0">
             <div class="col-4">
-                <button class="btn btn-outline-primary" @click="back">Back</button>
+                <button class="btn btn-primary" @click="back">Back</button>
             </div>
             <div class="col-4 text-center">
-                <button class="btn btn-outline-primary" @click="home">Home</button>
+                <button class="btn btn-primary" @click="home">Home</button>
             </div>
             <div class="col-4 text-right">
-                <button class="btn btn-outline-primary" @click="exportOpt">Export</button>
+                <button class="btn btn-primary export" @click="exportOpt">Export</button>
             </div>
         </div>
     </div>
@@ -62,6 +67,7 @@
     import 'echarts/lib/chart/bar'
     import 'echarts/lib/component/tooltip'
     import 'echarts-gl'
+import axios from "axios";
     //import filterModel from "@/components/filterModel";
 
     export default {
@@ -71,7 +77,7 @@
         data: function(){
             return {
                 chartData: null,
-                Answers: [10, 20 , 50, 15, 50, 80, 25, 30, 80, 95],
+                loading: true,
                 choice: 'choice',
                 decisions: [],
                 max_choice: 0,
@@ -94,60 +100,16 @@
             this.game = this.$route.params.game;
             this.chapter = this.$route.params.chapter;
 
-            this.$store.state.games = [
-                {
-                    "chapters": [
-                        "chapter 1",
-                        "chapter 2",
-                        "chapter 3"
-                    ],
-                    "countries": [
-                        "Spain",
-                        "Finland"
-                    ],
-                    "gameCode": "Game 1",
-                    "gameDescription": "Game were LGTBI content is discussed",
-                    "gameVersion": "v0.1",
-                    "numberPlayers": "60"
-                },
-                {
-                    "chapters": [
-                        "chapter 1",
-                        "chapter 2",
-                        "chapter 3"
-                    ],
-                    "countries": [
-                        "Spain",
-                        "Bangladesh"
-                    ],
-                    "gameCode": "Game 2",
-                    "gameDescription": "Game 2 were LGTBI content is discussed",
-                    "gameVersion": "v0.1",
-                    "numberPlayers": "40"
-                },
-                {
-                    "chapters": [
-                        "chapter 1",
-                        "chapter 2",
-                        "chapter 3",
-                        "chapter 4",
-                        "chapter 5",
-                    ],
-                    "countries": [
-                        "Spain",
-                        "Bangladesh"
-                    ],
-                    "gameCode": "Game 3",
-                    "gameDescription": "Game 2 were LGTBI content is discussed",
-                    "gameVersion": "v0.1",
-                    "numberPlayers": "40"
-                },
 
-            ];
+          axios.get('descriptions/games')
+              .then(res => {
+                this.$store.state.games = JSON.parse(res.request.response).games;
+                this.loading = false;
+                this.loadData();
+                this.submitData();
+              });
 
 
-            this.loadData();
-            this.submitData();
         }
         ,
         methods: {
@@ -158,10 +120,61 @@
                 this.$router.push('/main');
             },
             filter(){
-                this.$modal.show('filter');
+              let filter = {
+                "filters": [
+                  {
+                    "id": "country",
+                    "type": "textual",
+                    "values": [
+                      "Spain",
+                      "Finland"
+                    ]
+                  },
+                  {
+                    "id": "city",
+                    "type": "textual",
+                    "values": [
+                      "Madrid",
+                      "Oulu"
+                    ]
+                  }
+
+                ],
+                "group_ids": [
+                  {
+                    "description": "students from the class 1A of school...",
+                    "group_id": "class_1A"
+                  },{
+                    "description": "students from the class 2A of school...",
+                    "group_id": "class_2A"
+                  },{
+                    "description": "students from the class 3A of school...",
+                    "group_id": "class_3A"
+                  },{
+                    "description": "students from the class 4A of school...",
+                    "group_id": "class_4A"
+                  },{
+                    "description": "students from the class 5A of school...",
+                    "group_id": "class_5A"
+                  },
+                  {
+                    "description": "students from the class 6A of school...",
+                    "group_id": "class_6B"
+                  }
+                ]
+              };
+              let filterStudent = {
+                "filters": [
+                  {      "id": "sex",      "type": "textual",      "values": [        "Female",        "Male"      ]    },
+                  {      "id": "age",      "type": "numeric",      "values": [        "10",        "13"      ]    }
+                ]
+              };
+              this.$root.$emit('loadFilterDate', [filter, filterStudent]);
+              this.$modal.show('filter');
+
             },
             back(){
-                this.$router.push('/main/'+this.type+'/VideoGameSelection/');
+                this.$router.push('/main/single/VideoGameSelection/');
             },
             selectGame(event){
                 this.game = event.target.value;
@@ -178,120 +191,29 @@
             },
             submitData(){
                 this.chartDATA = [];
-                this.decisions = [
-                    {
-                        "choice": "cat",
-                        "eventCode": "ee1",
-                        "eventDescription": "student is asked for its favorite pet...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "dog",
-                        "eventCode": "ee1",
-                        "eventDescription": "student is asked for its favorite pet...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "rr",
-                        "eventCode": "e1",
-                        "eventDescription": "student is asked for its favorite pet...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "rr4",
-                        "eventCode": "Event 1",
-                        "eventDescription": "student is asked for its favorite pet...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "rr",
-                        "eventCode": "Event 1",
-                        "eventDescription": "student is asked for its favorite pet...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "rrr",
-                        "eventCode": "e1",
-                        "eventDescription": "student is asked for its favorite pet...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "rr",
-                        "eventCode": "e1",
-                        "eventDescription": "student is asked for its favorite pet...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "dd",
-                        "eventCode": "e1",
-                        "eventDescription": "student is asked for its favorite pet...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "catfish",
-                        "eventCode": "e2",
-                        "eventDescription": "student is asked for its favorite fish...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "salmon",
-                        "eventCode": "e2",
-                        "eventDescription": "student is asked for its favorite fish...",
-                        "eventType": "choice"
-                    },
-                    {
-                        "choice": "salmon",
-                        "eventCode": "edas2",
-                        "eventDescription": "student is asked for its favorite fish...",
-                        "eventType": "choice"
-                    },
+                this.loading = true;
+                axios.get("decision").then(res => {
+                  this.decisions = JSON.parse(res.request.response);
 
-                    {
-                        "choice": Math.random()* 100,
-                        "eventCode": "e3",
-                        "eventDescription": "Seconds waiting for your friend",
-                        "eventType": "timed"
-                    },
-                    {
-                        "choice": Math.random() * 100,
-                        "eventCode": "e3",
-                        "eventDescription": "Seconds waiting for your friend",
-                        "eventType": "timed"
-                    },
-                    {
-                        "choice": Math.random() * 100,
-                        "eventCode": "e3",
-                        "eventDescription": "Seconds waiting for your friend",
-                        "eventType": "timed"
-                    },
-                    {
-                        "choice": Math.random() * 100,
-                        "eventCode": "e4",
-                        "eventDescription": "3rd waiting for your friend",
-                        "eventType": "timed"
-                    },
-                    {
-                        "choice": Math.random() * 100,
-                        "eventCode": "e4",
-                        "eventDescription": "3rd waiting for your friend",
-                        "eventType": "timed"
-                    }
-                ];
+                  this.dataAnalysis();
 
-                this.dataAnalysis();
-
-                for(var i=0; i < this.unique_decision_final.length; i++ ) {
+                  for(var i=0; i < this.unique_decision_final.length; i++ ) {
                     this.chartDATA[i] = [];
                     for(var x=0; x < this.max_choice; x++)
-                        this.chartDATA[i][x] = 0;
-                }
-                for(var p =0; p < this.unique_decision_final.length; p++){
+                      this.chartDATA[i][x] = 0;
+                  }
+                  for(var p =0; p < this.unique_decision_final.length; p++){
                     var list = this.unique_decision_final[p].choices;
                     for(var j=0; j < list.length; j++) {
-                        this.chartDATA[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
+                      this.chartDATA[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
                     }
-                }
-                this.barChartLoad();
+                  }
+                  this.barChartLoad();
+
+                  this.loading = false;
+                });
+
+
             },
             loadData(){
                 let key = this.game;
@@ -388,6 +310,8 @@
 
             },
             barChartLoad(){
+
+
                 if(this.choice === 'choice') {
                     var emphasisStyle = {
                         itemStyle: {
@@ -401,15 +325,13 @@
                     this.chartData = {
                         backgroundColor: '#fff',
 
-
                         tooltip: {
                             formatter: function (params) {
                                 return 'Answer: “'+params.data.key+'” <br/>Selected by: '+
                                     params.value+'% of the students';
                             }
                         },
-                        calculable: true
-                        ,
+                        calculable: true,
                         xAxis: {
                             data: this.distinct_event,
                             axisLine: {onZero: true},
@@ -429,6 +351,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[0]
                             },
                             {
@@ -436,6 +359,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[1]
                             },
                             {
@@ -443,6 +367,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[2]
                             },
                             {
@@ -450,6 +375,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[3]
                             },
                             {
@@ -457,6 +383,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[4]
                             },
                             {
@@ -464,6 +391,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[5]
                             },
                             {
@@ -471,6 +399,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[6]
                             },
                             {
@@ -478,6 +407,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[7]
                             },
                             {
@@ -485,6 +415,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[8]
                             },
                             {
@@ -492,6 +423,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[9]
                             },
                             {
@@ -499,6 +431,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[10]
                             },
                             {
@@ -506,6 +439,7 @@
                                 type: 'bar',
                                 stack: 'one',
                                 emphasis: emphasisStyle,
+                                barWidth: 20,
                                 data: this.chartDATA[11]
                             }
                         ]
@@ -530,7 +464,6 @@
                                 type: 'shadow'
                             },
                             formatter: function (params) {
-                                console.log(params);
                                 let sum =0;
                                 let mean;
                                 let std;
@@ -564,13 +497,29 @@
                 }
             },
             gotoEvent(value){
-                this.$router.push('/main/'+this.type+'/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis/' + value + '/'+this.choice+'/EventView');
+                this.$router.push('/main/single/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis/' + value + '/'+this.choice+'/EventView');
             }
         }
     }
 </script>
 
 <style scoped lang="scss">
+    .title{
+        font-weight: 500;
+    }
+    .btn-success{
+        padding: 4px 19px;
+        border: 0;
+    }
+    .btn-primary{
+        padding: 4px 19px;
+        background: #e35219;
+        border: 0;
+    }
+    .custom-select{
+        text-transform: capitalize;
+        font-weight: bold;
+    }
     .content{
         margin: 50px 0;
     .custom-control{
@@ -582,7 +531,7 @@
         padding: 0;
         margin: 50px 0;
         li {
-            padding: 13px 20px;
+            padding: 1px 10px;
             background: #325973;
             color: white;
             border: 1px solid white;
@@ -592,4 +541,31 @@
             background: #848484;
         }
     }
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #0000003d;
+      height: 100%;
+      width: 100%;
+      z-index: 99999;
+      .centerScreen {
+        position: fixed;
+        width: 100%;
+        transform: translate(50%, 50%);
+        height: 100%;
+        margin-left: -2.5rem;
+        margin-top: -2.5rem;
+
+        .spinner-grow {
+          width: 5rem;
+          height: 5rem;
+        }
+
+        .text-dark {
+          color: #e35219 !important;
+        }
+      }
+    }
+    .echarts {width: 100% !important;}
 </style>

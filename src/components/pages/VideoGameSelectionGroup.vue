@@ -13,12 +13,12 @@
                 <div class="row">
 
                     <div class=" col-4">
-                        <select class="custom-select" @change="selectGame($event)">
-                            <option v-for="(item, index) in result" :key="index" :value="index">{{item.gameCode}} </option>
+                        <select class="custom-select" v-model="selectedGame" @change="selectGame()">
+                            <option v-for="(item, index) in result" :key="index" :value="item">{{item.gameCode}} </option>
                         </select>
                     </div>
                     <div class="col-4">
-                        <select class="custom-select"  @change="selectChapter($event)">
+                        <select class="custom-select" v-model="selectedChapter">
                             <option v-for="(item, index) in chapter" :key="index" :value="item">{{item}} </option>
                         </select>
                     </div>
@@ -26,7 +26,19 @@
                        <button class="btn btn-dark" @click="chapterInfo()">View Chapter Info</button>
                     </div>
                 </div>
-
+                <p class="title mt-3">Please select the two groups:</p>
+                <div class="row ">
+                <div class="col-md-3 offset-1">
+                  <select class="custom-select" v-model="SelectGroupOne" >
+                    <option v-for="(item, index) in groupsList" :key="index" :value="item.group_id">{{item.group_id}} </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <select class="custom-select" v-model="SelectGroupTwo">
+                    <option v-for="(item, index) in groupsList" :key="index" :value="item.group_id">{{item.group_id}}</option>
+                  </select>
+                </div>
+              </div>
                 <!--<p style="margin-top: 10px;">Please select Option filter:</p>
                 <div>
                     <div class="content">
@@ -54,28 +66,6 @@
                 <img v-for="(item, index) in flag" :key="index" :src="item.flag" :alt="item.name" class="flags">
             </div>
         </div>
-        <!--<div class="row m-3">
-            <div class="col-4">
-                <div class="custom-control custom-radio">
-                    <input type="radio" id="customRadio1" name="customRadio" class="custom-control-input">
-                    <label class="custom-control-label" for="customRadio1">Show only multi-choice events</label>
-                </div>
-            </div>
-            <div class="col-4">
-
-                <div class="custom-control custom-radio">
-                    <input type="radio" id="customRadio2" name="customRadio" class="custom-control-input">
-                    <label class="custom-control-label" for="customRadio2">Show temporal events</label>
-                </div>
-            </div>
-            <div class="col-4">
-
-                <div class="custom-control custom-radio">
-                    <input type="radio" id="customRadio3" name="customRadio" class="custom-control-input">
-                    <label class="custom-control-label" for="customRadio3">Show specific event</label>
-                </div>
-            </div>
-        </div>-->
         <div class="row" style="padding: 20px 0">
             <div class="col-4">
                 <button class="btn btn-primary" @click="back">Back</button>
@@ -105,40 +95,53 @@
                 chapter:[],
                 description: null,
                 NumPlay: 0,
-                events: [
-                    'event 1',
-                    'event 2',
-                    'event 3',
-                    'event 4',
-                ],
+                events: [],
                 selectedChapter: 'C1',
                 selectedGame: 'G1',
                 selectedGameVersion: 'v1',
+              groupsList: [],
+              SelectGroupOne: null,
+              SelectGroupTwo: null,
+              game: null
             };
         },
         mounted () {
 
-            //Get User ALl events druing initial load
+
 
           axios.get('descriptions/games')
               .then(res => {
                 this.result = JSON.parse(res.request.response).games;
                 this.$store.state.selectedData = this.result;
-                this.loading = false;
+                axios.get("filters/group").then(res => {
+                  this.groupsList = JSON.parse(res.request.response).group_ids;
+                  if(this.groupsList.length > 0)
+                    this.SelectGroupOne = this.groupsList[0].group_id;
+                  if(this.groupsList.length > 1)
+                    this.SelectGroupTwo = this.groupsList[1].group_id;
+                  else if(this.groupsList.length > 0)
+                    this.SelectGroupTwo = this.groupsList[0].group_id;
+
+                  this.loading = false;
+                });
+
                 if(this.result.length > 0){
                   this.loadGameData(0);
                 }
               });
 
 
+
         },
         methods: {
             next(){
-              this.$router.push('/main/single/VideoGameSelection/'+this.selectedGame+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/MicroAnalysis');
+
+              this.$router.push('/main/group/VideoGameSelection/'+this.selectedGame.gameCode+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/'+this.SelectGroupOne+'/'+this.SelectGroupTwo+'/MacroAnalysis/');
+
             },
             chapterInfo(){
 
-                this.$router.push('/main/single/VideoGameSelection/'+this.selectedGame+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/ChapterInfo');
+                this.$router.push('/main/group/VideoGameSelection/'+this.selectedGame.gameCode+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/ChapterInfo');
 
             },
 
@@ -148,18 +151,17 @@
 
             back(){
                 this.$router.push('/main');
-            },
-            selectChapter(event){
-                this.selectedChapter = event.target.value;
             }
             ,
-            selectGame(event){
-                this.loadGameData(event.target.value);
+            selectGame(){
+              console.log(this.selectedGame.gameCode);
+              this.chapter = this.selectedGame.chapters;
+              this.selectedChapter = this.chapter[0];
             },
             loadGameData(index){
 
                 this.description = this.result[index].gameDescription;
-                this.selectedGame = this.result[index].gameCode;
+                this.selectedGame = this.result[index];
                 this.NumPlay = this.result[index].numberPlayers;
                 this.chapter = this.result[index].chapters;
                 this.selectedGameVersion = this.result[index].gameVersion;
@@ -168,14 +170,13 @@
                 this.flag = [];
                 for(var item in this.country){
                     var name = this.country[item].trim().toLocaleLowerCase();
-
                     axios.get('https://restcountries.eu/rest/v2/name/'+name).then(
                         res => {
                             var list = JSON.parse(res.request.response);
                             this.flag.push(list[0]);
                         }
 
-                    );
+                    )
                 }
             }
         }
