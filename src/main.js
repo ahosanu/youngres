@@ -15,14 +15,14 @@ import { faFacebookF } from '@fortawesome/free-brands-svg-icons';
 import { faTwitter } from '@fortawesome/free-brands-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import ButtonSection from "@/components/MainSection";
-import ChapterInfo from "@/components/pages/ChapterInfo";
+import ChapterInfo from "@/components/pages/Micro/ChapterInfo";
 import Home from "@/components/pages/Home";
 import VideogameAndChapter from "@/components/pages/VideogameAndChapter";
 import UserWants from "@/components/pages/UserWants";
-import MicroAnalysis from "@/components/pages/MicroAnalysis";
-import VideoGameSelection from "@/components/pages/VideoGameSelection";
+import MicroAnalysis from "@/components/pages/Micro/MicroAnalysis";
+import VideoGameSelection from "@/components/pages/Micro/VideoGameSelection";
 import LoginPage from "@/components/pages/LoginPage";
-import EventView from "@/components/pages/EventView";
+import EventView from "@/components/pages/Micro/EventView";
 
 import router from './routes';
 import store from './store';

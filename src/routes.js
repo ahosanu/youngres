@@ -5,15 +5,15 @@ import MainSection from "@/components/MainSection";
 import VueRouter from "vue-router";
 //import store from './store'
 import Home from "@/components/pages/Home";
-import VideoGameSelection from "@/components/pages/VideoGameSelection";
+import VideoGameSelection from "@/components/pages/Micro/VideoGameSelection";
 import ViewComponent from "@/components/ViewComponent";
-import MicroAnalysis from "@/components/pages/MicroAnalysis";
-import EventView from "@/components/pages/EventView";
-import ChapterInfo from "@/components/pages/ChapterInfo";
-import MacroAnalysis from "@/components/pages/MacroAnalysis";
-import GroupEventView from "@/components/pages/GroupEventView";
-import VideoGameSelectionGroup from "@/components/pages/VideoGameSelectionGroup";
-import ChapterInfoGroup from "@/components/pages/ChapterInfoGroup";
+import MicroAnalysis from "@/components/pages/Micro/MicroAnalysis";
+import EventView from "@/components/pages/Micro/EventView";
+import ChapterInfo from "@/components/pages/Micro/ChapterInfo";
+import MacroAnalysis from "@/components/pages/Macro/MacroAnalysis";
+import GroupEventView from "@/components/pages/Macro/GroupEventView";
+import VideoGameSelectionGroup from "@/components/pages/Macro/VideoGameSelectionGroup";
+import ChapterInfoGroup from "@/components/pages/Macro/ChapterInfoGroup";
 
 export default new VueRouter({
     mode: 'history',
