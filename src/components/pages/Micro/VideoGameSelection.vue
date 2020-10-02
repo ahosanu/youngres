@@ -170,10 +170,10 @@
                 this.chapter = this.result[index].chapters;
                 this.selectedGameVersion = this.result[index].gameVersion;
                 this.selectedChapter = this.chapter[0];
-                this.country = this.result[index].countries;
+                var listCountry =this.result[index].contries;
                 this.flag = [];
-                for(var item in this.country){
-                    var name = this.country[item].trim().toLocaleLowerCase();
+                for(var item in listCountry){
+                    var name = listCountry[item].trim().toLocaleLowerCase();
 
                     axios.get('https://restcountries.eu/rest/v2/name/'+name).then(
                         res => {
