@@ -40,16 +40,16 @@
           <strong>{{gameevent}}:</strong>
           <p>{{description}}</p>
 
-          <strong>Highlights: ({{highlights.length}})</strong>
+          <strong>Highlights:</strong>
           <p v-for="(item, index) in this.highlights" :key="index">{{item}}</p>
           <span v-if="choice === 'choice'">
             <strong>Possible Choices: ({{possibleChoices.length}})</strong>
           <ul>
-            <li v-for="item in possibleChoices" :key="item">
+            <li class="text-uppercase" v-for="item in possibleChoices" :key="item">
               {{item}}
             </li>
           </ul>
-                        <strong>There are three possible answers: ({{AnswerList.length}})</strong>
+                        <strong>Student decisions among possible choices: ({{AnswerList.length}})</strong>
                     <br/>
                     <div class="ans" v-for="(item,index, key) in AnswerList" :key="key">
                         <p>- Answer 1: “{{item.name}}”.</p>
@@ -410,7 +410,9 @@ export default {
 
 <style scoped lang="scss">
 .title{
-  font-weight: 500;
+  font-weight: bold;
+  font-size: 18px;
+  color: #e35219;
 }
 .btn-success{
   padding: 4px 19px;

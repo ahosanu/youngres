@@ -1,14 +1,14 @@
 <template>
     <div class="content">
-        <p>Please, select the type of analysis you want to perform:</p>
+        <p class="title">Please, select the type of analysis you want to perform:</p>
         <div>
             <div class="custom-control custom-radio">
                 <input type="radio" id="customRadio1" name="customRadio" v-model="selectedAnalysis" value="single" class="custom-control-input">
-                <label class="custom-control-label" for="customRadio1">Micro analysis (single group)</label>
+                <label class="custom-control-label" :class="selectedAnalysis == 'single' ? 'checked' : '' "  for="customRadio1">Micro-analysis (Single group)</label>
             </div>
             <div class="custom-control custom-radio">
                 <input type="radio" id="customRadio2" name="customRadio" v-model="selectedAnalysis" value="group" class="custom-control-input">
-                <label class="custom-control-label" for="customRadio2">Macro analysis (two groups)</label>
+                <label class="custom-control-label" :class="selectedAnalysis == 'group' ? 'checked' : '' " for="customRadio2">Macro-analysis (Two groups)</label>
             </div>
         </div>
         <div class="row">
@@ -48,8 +48,21 @@
     }
     .content{
         margin: 50px 0;
-        .custom-control{
+        .title{
+          font-size: 22px;
+          font-weight: bold;
+          text-transform: capitalize;
+        }
+
+      .custom-control{
             margin-top: 16px;
         }
+      .checked{
+        color: #e35219;
+      }
+      label{
+        font-weight: bold;
+        font-size: 18px;
+      }
     }
 </style>

@@ -9,7 +9,7 @@
         </div>
         <div class="row main-content">
             <div class="col-8">
-                <p class="title">Please Select a video game:</p>
+                <p class="title">Please select a Video Game:</p>
                 <div class="row">
 
                     <div class=" col-4">
@@ -26,7 +26,7 @@
                        <button class="btn btn-dark" @click="chapterInfo()">View Chapter Info</button>
                     </div>
                 </div>
-                <p class="title mt-3">Please select the two groups:</p>
+                <p class="title mt-3">Please select the Two Groups:</p>
                 <div class="row ">
                 <div class="col-md-3 offset-1">
                   <select class="custom-select" v-model="SelectGroupOne" >
@@ -83,8 +83,10 @@
 
 <script>
 
+    import  xaxios from "axios";
     import  axios from "axios";
     axios.defaults.headers.common['access-control-allow-origin'] = '*';
+
     export default {
         data: function(){
             return {
@@ -176,7 +178,7 @@
                 this.flag = [];
                 for(var item in listCountry){
                     var name = listCountry[item].trim().toLocaleLowerCase();
-                    axios.get('https://restcountries.eu/rest/v2/name/'+name).then(
+                    xaxios.get('http://restcountries.eu/rest/v2/name/'+name).then(
                         res => {
                             var list = JSON.parse(res.request.response);
                             this.flag.push(list[0]);
@@ -229,7 +231,10 @@
     }
 
     .title{
-        font-weight: 500;
+      font-weight: bold;
+      font-size: 18px;
+      color: #e35219;
+
     }
     .btn-primary{
         padding: 4px 19px;

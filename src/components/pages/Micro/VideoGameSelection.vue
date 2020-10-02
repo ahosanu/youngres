@@ -9,7 +9,7 @@
         </div>
         <div class="row main-content">
             <div class="col-8">
-                <p class="title">Please Select a video game:</p>
+                <p class="title">Please select a Video Game and Chapter:</p>
                 <div class="row">
 
                     <div class=" col-4">
@@ -228,8 +228,11 @@
     }
 
     .title{
-        font-weight: 500;
+      font-weight: bold;
+      font-size: 18px;
+      color: #e35219;
     }
+
     .btn-primary{
         padding: 4px 19px;
         background: #e35219;

@@ -8,7 +8,7 @@
         </div>
       </div>
         <div class="content">
-            <p class="title">You have selected:</p>
+            <p class="title">To visualize Event decisions, select Game, Chapter and Event type (Choice/ Timed):</p>
             <div class="row">
                 <div class=" col-md-2">
                     <select class="custom-select" v-model="game" @change="selectGame($event)">
@@ -29,7 +29,7 @@
                 </div>
                 <div class="col-md-5 mt-sm-3 mt-md-0">
                     <button class="btn btn-primary" @click="filter()">Filter</button>
-                    <button class="btn btn-success" style="margin-left: 10px" @click="submitData()">Submit</button>
+                    <button class="btn btn-success" style="margin-left: 10px" @click="submitData()">Visualize</button>
                     <button class="btn btn-dark" style="margin-left: 10px" @click="chapterInfo()">Chapter Info</button>
                 </div>
             </div>
@@ -38,6 +38,7 @@
                     <v-chart :options="chartData" width="100%"/>
                 </div>
                 <div class="col-md-3">
+                    <p class="sub-title">Click to view Single Event Info:</p>
                     <ul class="eventlist" v-if="choice === 'choice'">
                         <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}</li>
                     </ul>
@@ -495,7 +496,14 @@ import axios from "axios";
 
 <style scoped lang="scss">
     .title{
-        font-weight: 500;
+      font-weight: bold;
+      font-size: 18px;
+      color: #e35219;
+
+    }
+    .sub-title{
+      color: #e35219;
+      margin: 26px 0 6px;
     }
     .btn-success, .btn-dark{
         padding: 4px 19px;
@@ -519,7 +527,6 @@ import axios from "axios";
     .eventlist{
         list-style: none;
         padding: 0;
-        margin: 50px 0;
         li {
             padding: 1px 10px;
             background: #325973;
