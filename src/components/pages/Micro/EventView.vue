@@ -24,9 +24,11 @@
             <option v-for="(item, index) in distinct_event_temp" :key="index" :value="item">{{item}} </option>
           </select>
         </div>
-        <!--<div class="col-3">
-            <button class="btn btn-outline-primary">Filter</button>
-        </div>-->
+        <div class="col-3">
+            <!--<button class="btn btn-outline-primary">Filter</button>-->
+
+          <button class="btn btn-dark" style="margin-left: 10px" @click="chapterInfo()">Chapter Info</button>
+        </div>
       </div>
       <br/>
       <div class="row">
@@ -38,16 +40,16 @@
           <strong>{{gameevent}}:</strong>
           <p>{{description}}</p>
 
-          <strong>Highlights:</strong>
+          <strong>Highlights: ({{highlights.length}})</strong>
           <p v-for="(item, index) in this.highlights" :key="index">{{item}}</p>
           <span v-if="choice === 'choice'">
-            <strong>Possible Choices:</strong>
+            <strong>Possible Choices: ({{possibleChoices.length}})</strong>
           <ul>
             <li v-for="item in possibleChoices" :key="item">
               {{item}}
             </li>
           </ul>
-                        <strong>There are three possible answers:</strong>
+                        <strong>There are three possible answers: ({{AnswerList.length}})</strong>
                     <br/>
                     <div class="ans" v-for="(item,index, key) in AnswerList" :key="key">
                         <p>- Answer 1: “{{item.name}}”.</p>
@@ -128,10 +130,6 @@ export default {
     this.version = this.$route.params.version;
 
 
-
-
-
-
     axios.get('descriptions/games')
         .then(resx => {
           this.$store.state.games = JSON.parse(resx.request.response).games;
@@ -174,38 +172,24 @@ export default {
     loadData(){
       this.loading = true;
 
+      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter);
+      const requestThree = axios.get("descriptions/event");
 
+      axios.all([requestOne, requestThree]).then(axios.spread((...responses) => {
+        this.decisions = responses[0].data;
+        this.result = responses[1].data;
 
-      axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter).then(res => {
-        this.decisions = JSON.parse(res.request.response);
+        this.dataAnalysis(); //Group One
 
-        this.dataAnalysis();
+        this.highlights = this.result.highlights;
+        this.description = this.result.eventDescription;
+        this.possibleChoices = this.result.possibleChoices;
+        this.loadEvent();
+        this.loading = false;
 
-        axios.get("descriptions/event").then(resd => {
-          this.result = JSON.parse(resd.request.response);
-          this.highlights = this.result.highlights;
-          this.description = this.result.eventDescription;
-          this.possibleChoices = this.result.possibleChoices;
-          this.loadEvent();
-          this.loading = false;
-        });
-
-      });
-
-      /* this.result = {
-           "eventCode": "e3",
-           "eventDescription": "Seconds waiting for your friend",
-           "eventType": "timed",
-           "highlights": [ "H1 - Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,." ],
-           "possibleChoices": [
-               "10",
-               "90"
-           ]
-       };*/
-
-
-
-
+      })).catch(errors => {
+        console.log(errors);
+      })
 
     },
     home(){
@@ -363,6 +347,7 @@ export default {
           series: [
             {
               type: 'bar',
+              barWidth: 20,
               data: data
             }
           ]
@@ -410,6 +395,14 @@ export default {
         sum += (x*x);
       });
       this.std = (sum/(this.Answers_tmp.length - 1)).toFixed(2);
+    },
+    chapterInfo(){
+      this.$root.$emit('viewChapterInfo', {
+        game: this.game,
+        version: this.version,
+        chapter: this.chapter
+      });
+      this.$modal.show("chapter_info");
     }
   }
 }

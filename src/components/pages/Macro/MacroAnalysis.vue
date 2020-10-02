@@ -10,26 +10,27 @@
         <div class="content">
             <p class="title">You have selected:</p>
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select class="custom-select" v-model="game" @change="selectGame($event)">
                         <option v-for="(item, index) in result" :key="index" :value="item.gameCode">{{item.gameCode}} </option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select class="custom-select" v-model="chapter"  @change="selectChapter($event)">
                         <option v-for="(item, index) in chapters" :key="index" :value="item">{{item}} </option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <select class="custom-select" @change="selectChoice($event)" style="margin-left: 10px;">
+                    <select class="custom-select" @change="selectChoice($event)">
                         <option selected value="choice">Multiple-choice</option>
                         <option value="timed">Temporal</option>
                         <!--<option value="xpe">A specific</option>-->
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-5 mt-sm-3 mt-md-0">
                     <button class="btn btn-primary" @click="filter()">Filter</button>
                     <button class="btn btn-success" style="margin-left: 10px" @click="submitData()">Submit</button>
+                    <button class="btn btn-dark" style="margin-left: 10px" @click="chapterInfo()">Chapter Info</button>
                 </div>
             </div>
             <div class="row mt-3">
@@ -115,7 +116,8 @@
                 SelectGroupTwo: null,
                 GroupFilter: null,
                 filterHeader: null,
-                getFilterHeader: null
+                getFilterHeader: null,
+                filterStudent: []
             }
         },
         mounted(){
@@ -124,29 +126,33 @@
             this.chapter = this.$route.params.chapter;
             this.version = this.$route.params.version;
 
-            axios.get('descriptions/games')
-                .then(res => {
-                  this.$store.state.games = JSON.parse(res.request.response).games;
-
-                  axios.get("filters/group").then(res => {
-                    this.GroupFilter = JSON.parse(res.request.response)
-                    this.groupsList = this.GroupFilter.group_ids;
-
-                    this.SelectGroupOne = this.$route.params.groupOne;
-                    this.SelectGroupTwo = this.$route.params.groupTwo;
-                    this.loadData();
-                    this.submitData();
-                    this.loading = false;
-                  });
+            const requestOne = axios.get("descriptions/games");
+            const requestTwo = axios.get("filters/group");
+            const requestThree = axios.get("filters/student");
 
 
-                });
+            axios.all([requestOne, requestTwo, requestThree ]).then(axios.spread((...responses) => {
+              this.$store.state.games = responses[0].data.games;
+              this.GroupFilter = responses[1].data
+              this.filterStudent = responses[2].data
 
-          this.$root.$on('loadFilterHeaderGroup', (Filter) => { // here you need to use the arrow function
-            this.getFilterHeader = [];
-            this.getFilterHeader = Filter;
-            this.submitData();
-          });
+              this.groupsList = this.GroupFilter.group_ids;
+              this.SelectGroupOne = this.$route.params.groupOne;
+              this.SelectGroupTwo = this.$route.params.groupTwo;
+              this.loadData();
+              this.submitData();
+              this.loading = false;
+
+            })).catch(errors => {
+              console.log(errors);
+            })
+
+
+            this.$root.$on('loadFilterHeaderGroup', (Filter) => { // here you need to use the arrow function
+              this.getFilterHeader = [];
+              this.getFilterHeader = Filter;
+              this.submitData();
+            });
 
 
         }
@@ -160,13 +166,7 @@
             },
             filter(){
 
-              let filterStudent = {
-                "filters": [
-                  {      "id": "sex",      "type": "textual",      "values": [        "Female",        "Male"      ]    },
-                  {      "id": "age",      "type": "numeric",      "values": [        "10",        "13"      ]    }
-                ]
-              };
-              this.$root.$emit('loadFilterDate', [this.GroupFilter, filterStudent, "group"]);
+              this.$root.$emit('loadFilterDate', [this.GroupFilter, this.filterStudent, "group"]);
               this.$modal.show('filter');
 
             },
@@ -221,14 +221,17 @@
                   this.getData(groupOneFilter, groupTwoFilter);
                 }
 
-
-              console.log(groupOneFilter);
-              console.log(groupTwoFilter);
             },
             getData(groupOneFilter, groupTwoFilter){
-              axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { 'headers': { 'filters': JSON.stringify(groupOneFilter)}}).
-              then(res => {
-                this.decisions = JSON.parse(res.request.response);
+
+
+              const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { 'headers': { 'filters': JSON.stringify(groupOneFilter)}});
+              const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { 'headers': { 'filters': JSON.stringify(groupTwoFilter)}});
+
+
+              axios.all([requestOne, requestTwo]).then(axios.spread((...responses) => {
+                /*Group One*/
+                this.decisions = responses[0].data;
 
                 this.dataAnalysis();
 
@@ -245,27 +248,31 @@
                 }
 
 
-                axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { 'headers': { 'filters': JSON.stringify(groupTwoFilter)}}).then(resx => {
-                  this.decisions_two = JSON.parse(resx.request.response);
+                /*Group Two Data*/
+                this.decisions_two = responses[1].data;
 
-                  this.dataAnalysisTwo();
+                this.dataAnalysisTwo();
 
-                  for(var i=0; i < this.unique_decision_final_two.length; i++ ) {
-                    this.chartDATATwo[i] = [];
-                    for(var x=0; x < this.max_choice_two; x++)
-                      this.chartDATATwo[i][x] = 0;
+                for( i=0; i < this.unique_decision_final_two.length; i++ ) {
+                  this.chartDATATwo[i] = [];
+                  for( x=0; x < this.max_choice_two; x++)
+                    this.chartDATATwo[i][x] = 0;
+                }
+                for( p =0; p < this.unique_decision_final_two.length; p++){
+                  list = this.unique_decision_final_two[p].choices;
+                  for( j=0; j < list.length; j++) {
+                    this.chartDATATwo[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
                   }
-                  for(var p =0; p < this.unique_decision_final_two.length; p++){
-                    var list = this.unique_decision_final_two[p].choices;
-                    for(var j=0; j < list.length; j++) {
-                      this.chartDATATwo[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
-                    }
-                  }
-                  this.barChartLoad();
+                }
+                this.barChartLoad();
 
-                  this.loading = false;
-                });
-              });
+                this.loading = false;
+
+
+              })).catch(errors => {
+                console.log(errors);
+              })
+
             },
             loadData(){
                 let key = this.game;
@@ -284,7 +291,7 @@
                 }
 
             },
-          dataAnalysis(){
+            dataAnalysis(){
             this.distinct_event = [];
             this.distinct_event_temp = [];
             let uniqueEventList = [];
@@ -361,7 +368,7 @@
 
 
           },
-          copy (o) { // copy object or array
+            copy (o) { // copy object or array
             let output, v, key;
             output = Array.isArray(o) ? [] : {};
 
@@ -375,7 +382,7 @@
             }
             return output;
           },
-          dataAnalysisTwo(){
+            dataAnalysisTwo(){
             this.distinct_event_two = [];
             this.distinct_event_temp_two = [];
             let uniqueEventList_two = [];
@@ -756,7 +763,15 @@
             },
             gotoEvent(value){
                 this.$router.push('/main/group/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/'+ this.SelectGroupOne +'/'+ this.SelectGroupTwo +'/MacroAnalysis/' + value + '/'+this.choice+'/EventView');
-            }
+            },
+          chapterInfo(){
+            this.$root.$emit('viewChapterInfo', {
+              game: this.game,
+              version: this.version,
+              chapter: this.chapter
+            });
+            this.$modal.show("chapter_info");
+          }
         }
     }
 
@@ -766,7 +781,7 @@
     .title{
         font-weight: 500;
     }
-    .btn-success{
+    .btn-success, .btn-dark{
         padding: 4px 19px;
         border: 0;
     }

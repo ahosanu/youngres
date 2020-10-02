@@ -10,33 +10,34 @@
         <div class="content">
             <p class="title">You have selected:</p>
             <div class="row">
-                <div class=" col-3">
+                <div class=" col-md-2">
                     <select class="custom-select" v-model="game" @change="selectGame($event)">
                         <option v-for="(item, index) in result" :key="index" :value="item.gameCode">{{item.gameCode}} </option>
                     </select>
                 </div>
-                <div class="col-3">
+                <div class="col-md-2">
                     <select class="custom-select" v-model="chapter"  @change="selectChapter($event)">
                         <option v-for="(item, index) in chapters" :key="index" :value="item">{{item}} </option>
                     </select>
                 </div>
-                <div class="col-3">
-                    <select class="custom-select" @change="selectChoice($event)" style="margin-left: 10px;">
+                <div class="col-md-3">
+                    <select class="custom-select" @change="selectChoice($event)">
                         <option selected value="choice">Multiple-choice</option>
                         <option value="timed">Temporal</option>
                         <!--<option value="xpe">A specific</option>-->
                     </select>
                 </div>
-                <div class="col-3">
+                <div class="col-md-5 mt-sm-3 mt-md-0">
                     <button class="btn btn-primary" @click="filter()">Filter</button>
                     <button class="btn btn-success" style="margin-left: 10px" @click="submitData()">Submit</button>
+                    <button class="btn btn-dark" style="margin-left: 10px" @click="chapterInfo()">Chapter Info</button>
                 </div>
             </div>
             <div class="row">
-                <div class="col-9">
+                <div class="col-md-9">
                     <v-chart :options="chartData" width="100%"/>
                 </div>
-                <div class="col-3">
+                <div class="col-md-3">
                     <ul class="eventlist" v-if="choice === 'choice'">
                         <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}</li>
                     </ul>
@@ -92,6 +93,8 @@ import axios from "axios";
                 chartDATA: [],
                 result: [],
                 chapters: [],
+                filterStudent: [],
+              GroupFilter: []
             }
         },
         mounted(){
@@ -99,6 +102,33 @@ import axios from "axios";
             this.type = this.$route.params.type;
             this.game = this.$route.params.game;
             this.chapter = this.$route.params.chapter;
+
+
+
+          this.game = this.$route.params.game;
+          this.chapter = this.$route.params.chapter;
+          this.version = this.$route.params.version;
+
+          const requestOne = axios.get("descriptions/games");
+          const requestTwo = axios.get("filters/group");
+          const requestThree = axios.get("filters/student");
+
+
+          axios.all([requestOne, requestTwo, requestThree ]).then(axios.spread((...responses) => {
+            this.$store.state.games = responses[0].data.games;
+            this.GroupFilter = responses[1].data
+            this.filterStudent = responses[2].data
+
+            this.groupsList = this.GroupFilter.group_ids;
+            this.SelectGroupOne = this.$route.params.groupOne;
+            this.SelectGroupTwo = this.$route.params.groupTwo;
+            this.loadData();
+            this.submitData();
+            this.loading = false;
+
+          })).catch(errors => {
+            console.log(errors);
+          })
 
 
           axios.get('descriptions/games')
@@ -119,57 +149,17 @@ import axios from "axios";
             home(){
                 this.$router.push('/main');
             },
+          chapterInfo(){
+            this.$root.$emit('viewChapterInfo', {
+              game: this.game,
+              version: this.version,
+              chapter: this.chapter
+            });
+            this.$modal.show("chapter_info");
+          },
             filter(){
-              let filter = {
-                "filters": [
-                  {
-                    "id": "country",
-                    "type": "textual",
-                    "values": [
-                      "Spain",
-                      "Finland"
-                    ]
-                  },
-                  {
-                    "id": "city",
-                    "type": "textual",
-                    "values": [
-                      "Madrid",
-                      "Oulu"
-                    ]
-                  }
 
-                ],
-                "group_ids": [
-                  {
-                    "description": "students from the class 1A of school...",
-                    "group_id": "class_1A"
-                  },{
-                    "description": "students from the class 2A of school...",
-                    "group_id": "class_2A"
-                  },{
-                    "description": "students from the class 3A of school...",
-                    "group_id": "class_3A"
-                  },{
-                    "description": "students from the class 4A of school...",
-                    "group_id": "class_4A"
-                  },{
-                    "description": "students from the class 5A of school...",
-                    "group_id": "class_5A"
-                  },
-                  {
-                    "description": "students from the class 6A of school...",
-                    "group_id": "class_6B"
-                  }
-                ]
-              };
-              let filterStudent = {
-                "filters": [
-                  {      "id": "sex",      "type": "textual",      "values": [        "Female",        "Male"      ]    },
-                  {      "id": "age",      "type": "numeric",      "values": [        "10",        "13"      ]    }
-                ]
-              };
-              this.$root.$emit('loadFilterDate', [filter, filterStudent]);
+              this.$root.$emit('loadFilterDate', [this.GroupFilter, this.filterStudent, "single"]);
               this.$modal.show('filter');
 
             },
@@ -507,7 +497,7 @@ import axios from "axios";
     .title{
         font-weight: 500;
     }
-    .btn-success{
+    .btn-success, .btn-dark{
         padding: 4px 19px;
         border: 0;
     }

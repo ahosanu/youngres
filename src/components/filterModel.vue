@@ -1,8 +1,8 @@
 <template>
-    <modal name="filter" :width="900" height="auto" >
+    <modal name="filter" height="auto" class="mymodal">
         <p style="text-align: center; padding: 20px; font-weight: bold;">Filter</p>
         <div class="row" style="min-height: 310px;">
-            <div class="col-4">
+            <div class="col-md-6">
 
                 <p style="text-align: center">
                     <input type="checkbox" v-model="group" @change="filterUpdate()" value="group"> Group
@@ -42,7 +42,7 @@
                 </div>
 
             </div>
-            <div class="col-4">
+            <div class="col-md-6">
                 <p style="text-align: center">
                     <input type="checkbox" v-model="student" @change="filterUpdate()"> Student
                 </p>
@@ -65,38 +65,14 @@
                     </select>
 
                 </div>
+
             </div>
-            <div class="col-4" style="position: relative">
-                <p style="text-align: center">
-                    <input type="checkbox" > Test
-                </p>
 
-                <div class="group">
-                    <p>
-                        <input type="checkbox" >
-                    </p>
-                    <select>
-                        <option>Span1</option>
-                        <option>Span1</option>
-                        <option>Span1</option>
-                    </select>
-
-                    <p>
-                        <input type="checkbox" >
-                    </p>
-                    <select >
-                        <option>Span1</option>
-                        <option>Span1</option>
-                        <option>Span1</option>
-                    </select>
-
-                </div>
-                <div class="btngroup text-right m-3" style="position: absolute;bottom: 0;width: 77%;" >
-                    <button class="btn btn-outline-primary" @click="close()">Back</button>
-                    <button class="btn btn-success offset-1" @click="filter()">Filter</button>
-                </div>
-            </div>
         </div>
+      <div class="btngroup text-right m-3">
+        <button class="btn btn-outline-primary" @click="close()">Back</button>
+        <button class="btn btn-success offset-1" @click="filter()">Filter</button>
+      </div>
     </modal>
 </template>
 
@@ -293,6 +269,13 @@
       top: 0;
       left: 0;
       z-index: 9999;
+    }
+
+    .vm--modal {
+      left: 0 !important;
+      width: 100% !important;
+      overflow-y: auto !important;
+      max-height: 600px !important;
     }
 
 </style>

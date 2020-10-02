@@ -13,9 +13,9 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { faLinkedinIn } from '@fortawesome/free-brands-svg-icons';
 import { faFacebookF } from '@fortawesome/free-brands-svg-icons';
 import { faTwitter } from '@fortawesome/free-brands-svg-icons';
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import ButtonSection from "@/components/MainSection";
-import ChapterInfo from "@/components/pages/Micro/ChapterInfo";
 import Home from "@/components/pages/Home";
 import VideogameAndChapter from "@/components/pages/VideogameAndChapter";
 import UserWants from "@/components/pages/UserWants";
@@ -35,6 +35,7 @@ axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 library.add( faTwitter );
 library.add( faLinkedinIn );
 library.add( faFacebookF  );
+library.add( faTimes  );
 
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 Vue.use(BootstrapVue);
@@ -52,7 +53,6 @@ Vue.component('main-section', ButtonSection);
 
 
 /*Page Components*/
-Vue.component('chapter-info', ChapterInfo);
 Vue.component('home-section', Home);
 Vue.component('videogame-chapter', VideogameAndChapter);
 Vue.component('user-wants', UserWants);
@@ -60,7 +60,6 @@ Vue.component('micro-analysis', MicroAnalysis);
 Vue.component('video-game-section', VideoGameSelection);
 Vue.component('login', LoginPage);
 Vue.component('event-view', EventView);
-//Vue.component('v-chart', ECharts);
 
 
 new Vue({

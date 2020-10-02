@@ -138,7 +138,13 @@
             },
             chapterInfo(){
 
-                this.$router.push('/main/single/VideoGameSelection/'+this.selectedGame+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/ChapterInfo');
+              this.$root.$emit('viewChapterInfo', {
+                game: this.selectedGame,
+                version: this.selectedGameVersion,
+                chapter: this.selectedChapter
+              });
+              this.$modal.show("chapter_info");
+               // this.$router.push('/main/single/VideoGameSelection/'+this.selectedGame+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/ChapterInfo');
 
             },
 

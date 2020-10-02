@@ -9,11 +9,9 @@ import VideoGameSelection from "@/components/pages/Micro/VideoGameSelection";
 import ViewComponent from "@/components/ViewComponent";
 import MicroAnalysis from "@/components/pages/Micro/MicroAnalysis";
 import EventView from "@/components/pages/Micro/EventView";
-import ChapterInfo from "@/components/pages/Micro/ChapterInfo";
 import MacroAnalysis from "@/components/pages/Macro/MacroAnalysis";
 import GroupEventView from "@/components/pages/Macro/GroupEventView";
 import VideoGameSelectionGroup from "@/components/pages/Macro/VideoGameSelectionGroup";
-import ChapterInfoGroup from "@/components/pages/Macro/ChapterInfoGroup";
 
 export default new VueRouter({
     mode: 'history',
@@ -56,10 +54,6 @@ export default new VueRouter({
                             component:  VideoGameSelection,
                         },
                         {
-                            path: ':game/:chapter/:version/ChapterInfo',
-                            component: ChapterInfo,
-                        },
-                        {
                             path: ':game/:chapter/:version/MicroAnalysis',
                             component: ViewComponent,
                             children: [
@@ -82,10 +76,6 @@ export default new VueRouter({
                         {
                             path: '',
                             component:  VideoGameSelectionGroup,
-                        },
-                        {
-                            path: ':game/:chapter/:version/ChapterInfo',
-                            component: ChapterInfoGroup,
                         },
                         {
                             path: ':game/:chapter/:version/:groupOne/:groupTwo/MacroAnalysis',

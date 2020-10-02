@@ -24,9 +24,11 @@
             <option v-for="(item, index) in distinct_event_temp" :key="index" :value="item">{{item}} </option>
           </select>
         </div>
-        <!--<div class="col-3">
-            <button class="btn btn-outline-primary">Filter</button>
-        </div>-->
+        <div class="col-3">
+<!--            <button class="btn btn-outline-primary">Filter</button>-->
+
+          <button class="btn btn-dark" style="margin-left: 10px" @click="chapterInfo()">Chapter Info</button>
+        </div>
       </div>
       <br/>
       <div class="row">
@@ -39,17 +41,17 @@
 
 
 
-          <strong>Highlights:</strong>
+          <strong>Highlights: ({{highlights.length}})</strong>
           <p v-for="(item, index) in this.highlights" :key="index">{{item}}</p>
 
           <span v-if="choice === 'choice'">
-             <strong>Possible Choices:</strong>
+             <strong>Possible Choices: ({{possibleChoices.length}})</strong>
           <ul>
             <li v-for="item in possibleChoices" :key="item">
               {{item}}
             </li>
           </ul>
-            <strong>Student selected decision:</strong>
+            <strong>Student selected decision: ({{AnswerList.length}})</strong>
                     <br/>
                     <div class="ans" v-for="(item,index, key) in AnswerList" :key="key">
                         <p>- Answer 1: “{{item.name}}”.</p>
@@ -61,9 +63,15 @@
                     <strong>Statistics:</strong>
 
                     <div class="ans">
-                        <p>Mean: {{mean_val}} secs.</p>
-                        <p>Std: {{std}}  secs.</p>
+                        <p>{{groupOne}} Mean: {{mean_val}} secs.</p>
+                        <p>{{groupOne}} Std: {{std}}  secs.</p>
                     </div>
+
+                    <div class="ans">
+                        <p>{{groupTwo}} Mean: {{mean_val_two}} secs.</p>
+                        <p>{{groupTwo}} Std: {{stdTwo}}  secs.</p>
+                    </div>
+
                     </span>
         </div>
       </div>
@@ -102,6 +110,8 @@ export default {
       highlights: [],
       Answers: [],
       Answers_tmp: [],
+      AnswersTwo: [],
+      Answers_tmp_two: [],
       chartData: null,
       loading: true,
       chapters: [],
@@ -111,17 +121,26 @@ export default {
       distinct_event_temp: [],
       unique_decision_final:[],
       unique_decision_final_temp:[],
+      decisions_two: [],
+      distinct_event_two: [],
+      distinct_event_temp_two: [],
+      unique_decision_final_two:[],
+      unique_decision_final_temp_two:[],
       game: null,
       version: null,
       chapter: null,
       gameevent: null,
       chartDATA: [],
+      chartDATATwo: [],
       AnswerList: [],
+      AnswerListTwo: [],
       mean_val: 0,
+      mean_val_two: 0,
       std: 0,
+      stdTwo: 0,
       groupOne: null,
       groupTwo: null,
-      possibleChoice: [],
+      possibleChoices: [],
     };
   },
   mounted(){
@@ -159,8 +178,10 @@ export default {
 
           this.loadData();
 
-          this.loading = false;
+
         });
+
+
 
 
 
@@ -178,29 +199,33 @@ export default {
       this.loadEvent();
     },
     loadData(){
+
       this.loading = true;
 
+      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter);
+      const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter);
+      const requestThree = axios.get("descriptions/event");
+
+      axios.all([requestOne, requestTwo, requestThree]).then(axios.spread((...responses) => {
+        this.decisions = responses[0].data;
+        this.result = responses[2].data;
+
+        this.dataAnalysis(); //Group One
+
+        this.highlights = this.result.highlights;
+        this.description = this.result.eventDescription;
+        this.possibleChoices = this.result.possibleChoices;
+        this.decisions_two = responses[1].data;
+        this.dataAnalysisTwo(); //Group One
+
+        this.loadEvent();
+
+        this.loading = false;
 
 
-      axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter).then(res => {
-        this.decisions = JSON.parse(res.request.response);
-
-        this.dataAnalysis();
-
-        axios.get("descriptions/event").then(resd => {
-          this.result = JSON.parse(resd.request.response);
-          this.highlights = this.result.highlights;
-          this.description = this.result.eventDescription;
-          this.possibleChoices = this.result.possibleChoices;
-          this.loadEvent();
-          this.loading = false;
-        });
-
-      });
-
-
-
-
+      })).catch(errors => {
+        console.log(errors);
+      })
 
     },
     home(){
@@ -220,6 +245,11 @@ export default {
             return data;
         });
 
+        let viewEventTwo = this.unique_decision_final_two.filter(function (data) {
+          if (data.eventCode === key)
+            return data;
+        });
+
         if (viewEvent.length > 0) {
           viewEvent = viewEvent[0];
           this.AnswerList = viewEvent.choices;
@@ -227,9 +257,24 @@ export default {
           for (let i = 0; i < this.AnswerList.length; i++) {
             this.Answers.push(this.AnswerList[i].percent);
           }
+
         }
+
+        if (viewEventTwo.length > 0) {
+          viewEventTwo = viewEventTwo[0];
+          this.AnswerListTwo = viewEventTwo.choices;
+          this.AnswersTwo = [];
+          for (let i = 0; i < this.AnswerListTwo.length; i++) {
+            this.AnswersTwo.push(this.AnswerListTwo[i].percent);
+          }
+        }
+
       }else{
         let viewEvent = this.unique_decision_final_temp.filter(function (data) {
+          if (data.eventCode === key)
+            return data;
+        });
+        let viewEventTwo = this.unique_decision_final_temp_two.filter(function (data) {
           if (data.eventCode === key)
             return data;
         });
@@ -239,6 +284,13 @@ export default {
           this.Answers_tmp = [];
           for (let i = 0; i < viewEvent.choices.length; i++) {
             this.Answers_tmp.push(['s'+(i+1),viewEvent.choices[i]]);
+          }
+        }
+        if (viewEventTwo.length > 0) {
+          viewEventTwo = viewEventTwo[0];
+          this.Answers_tmp_two = [];
+          for (let i = 0; i < viewEventTwo.choices.length; i++) {
+            this.Answers_tmp_two.push(['s'+(i+1),viewEventTwo.choices[i]]);
           }
         }
         this.getMeanValue();
@@ -313,10 +365,77 @@ export default {
       this.unique_decision_final_temp = uniqueEventListTmp;
       this.unique_decision_final =  uniqueEventList;
     },
+    dataAnalysisTwo(){
+      this.distinct_event_two = [];
+      this.distinct_event_temp_two = [];
+      let uniqueEventList = [];
+      let uniqueEventListTmp = [];
+      for(var i =0; i < this.decisions_two.length ; i++){
+        var item = this.decisions_two[i];
+        if(item.eventType === 'choice') {
+          var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
+          if (filter === -1) {
+            uniqueEventList.push(
+                {
+                  'eventCode': item.eventCode,
+                  'totalChoice': 1,
+                  'choices': [
+                    {
+                      name: item.choice,
+                      count: 1,
+                      percent: 0
+                    }
+                  ]
+                });
+          }else{
+            let ch_index = uniqueEventList[filter].choices.findIndex((data) => data.name === item.choice);
+            uniqueEventList[filter].totalChoice++;
+
+            if(ch_index === -1) {
+              uniqueEventList[filter].choices.push({
+                name: item.choice,
+                count: 1,
+                percent: 0
+              });
+            }else {
+              uniqueEventList[filter].choices[ch_index].count++;
+            }
+          }
+        }else{
+          let filter_tmp = uniqueEventListTmp.findIndex((data) => data.eventCode === item.eventCode);
+          if (filter_tmp === -1) {
+            uniqueEventListTmp.push(
+                {
+                  'eventCode': item.eventCode,
+                  'choices': [item.choice]
+                });
+          }else{
+            uniqueEventListTmp[filter_tmp].choices.findIndex((data) => data.name === item.choice);
+            uniqueEventListTmp[filter_tmp].choices.push(item.choice);
+
+          }
+        }
+      }
+      uniqueEventList.forEach((value) => {
+       /* if(this.max_choice < value.choices.length)
+          this.max_choice = value.choices.length;*/
+        this.distinct_event_two.push(value.eventCode);
+        value.choices.forEach((ch) => {
+          ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
+        });
+      });
+      uniqueEventListTmp.forEach((value) => {
+        this.distinct_event_temp_two.push(value.eventCode);
+      });
+      this.unique_decision_final_temp_two = uniqueEventListTmp;
+      this.unique_decision_final_two =  uniqueEventList;
+
+    },
     barChartLoad(){
       if(this.choice === 'choice') {
         var dataAxis = [];
         var data = this.Answers;
+        var dataTwo = this.AnswersTwo;
 
 
         for (var i = 0; i < data.length; i++) {
@@ -367,15 +486,22 @@ export default {
               name: this.groupTwo,
               type: 'bar',
               barWidth: 20,
-              data: data
+              data: dataTwo
             }
           ]
         }
       }else{
         let xAxisData = [];
-        this.Answers_tmp.forEach((value, index) => {
-          xAxisData.push('s'+(index+1));
-        });
+
+        if(this.Answers_tmp.length > this.Answers_tmp_two.length) {
+          this.Answers_tmp.forEach((value, index) => {
+            xAxisData.push('s' + (index + 1));
+          });
+        }else{
+          this.Answers_tmp_two.forEach((value, index) => {
+            xAxisData.push('s' + (index + 1));
+          });
+        }
 
         this.chartData = {
           tooltip: {},
@@ -402,18 +528,27 @@ export default {
             {
               name: this.groupTwo,
               type: 'scatter',
-              data: this.Answers_tmp,
+              data: this.Answers_tmp_two,
             }
           ]
         };
       }
     },
     getMeanValue(){
+
       let sum = 0;
       this.Answers_tmp.forEach((value) => {
         sum= sum + parseFloat(value[1]);
       });
       this.mean_val = (sum/this.Answers_tmp.length).toFixed(2);
+
+
+      let sumTwo = 0;
+      this.Answers_tmp_two.forEach((value) => {
+        sumTwo= sumTwo + parseFloat(value[1]);
+      });
+      this.mean_val_two = (sumTwo/this.Answers_tmp_two.length).toFixed(2);
+
     },
     getStd(){
       let sum = 0;
@@ -422,6 +557,21 @@ export default {
         sum += (x*x);
       });
       this.std = (sum/(this.Answers_tmp.length - 1)).toFixed(2);
+
+      let sumTwo = 0;
+      this.Answers_tmp_two.forEach((value) => {
+        let z = (parseFloat(value[1]) - this.mean_val_two);
+        sumTwo += (z*z);
+      });
+      this.stdTwo = (sumTwo/(this.Answers_tmp_two.length - 1)).toFixed(2);
+    },
+    chapterInfo(){
+      this.$root.$emit('viewChapterInfo', {
+        game: this.game,
+        version: this.version,
+        chapter: this.chapter
+      });
+      this.$modal.show("chapter_info");
     }
   }
 }

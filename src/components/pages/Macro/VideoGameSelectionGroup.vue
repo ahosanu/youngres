@@ -140,9 +140,12 @@
 
             },
             chapterInfo(){
-
-                this.$router.push('/main/group/VideoGameSelection/'+this.selectedGame.gameCode+'/'+this.selectedChapter+'/'+ this.selectedGameVersion +'/ChapterInfo');
-
+              this.$root.$emit('viewChapterInfo', {
+                game: this.selectedGame.gameCode,
+                version: this.selectedGameVersion,
+                chapter: this.selectedChapter
+              });
+              this.$modal.show("chapter_info");
             },
 
             home(){

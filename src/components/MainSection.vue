@@ -1,6 +1,7 @@
 <template>
     <div class="container">
         <filter-view></filter-view>
+        <chapter-info></chapter-info>
         <router-view></router-view>
     </div>
 </template>
@@ -11,11 +12,13 @@
 
    // import axios from "axios";
 
-    import filterModel from "@/components/filterModel";
+   import filterModel from "@/components/filterModel";
+   import ChapterInfoModal from "@/components/pages/ChapterInfoModal";
 
    export default {
         components:{
-            'filter-view': filterModel
+            'filter-view': filterModel,
+            'chapter-info': ChapterInfoModal
         },
         data: function(){
             return {
