@@ -810,7 +810,6 @@
     .eventlist{
         list-style: none;
         padding: 0;
-        margin: 50px 0;
         li {
             padding: 1px 10px;
             background: #325973;

@@ -62,8 +62,8 @@
                 <br>
                 N Students Play: {{NumPlay}}
                 <br>
-                Country:
-                <img v-for="(item, index) in flag" :key="index" :src="item.flag" :alt="item.name" class="flags">
+                <strong>Country:</strong>
+              <ul><li v-for="(item, index) in country" :key="index">{{item}}</li></ul>
             </div>
         </div>
         <div class="row" style="padding: 20px 0">
@@ -82,8 +82,6 @@
 </template>
 
 <script>
-
-    import  xaxios from "axios";
     import  axios from "axios";
     axios.defaults.headers.common['access-control-allow-origin'] = '*';
 
@@ -172,9 +170,8 @@
                 this.selectedGameVersion = this.result[index].gameVersion;
                 this.selectedChapter = this.chapter[0];
 
-                this.country = this.result[index].countries;
-
-                var listCountry =this.result[index].contries;
+                this.country = this.result[index].contries;
+    /*            var listCountry =this.result[index].contries;
                 this.flag = [];
                 for(var item in listCountry){
                     var name = listCountry[item].trim().toLocaleLowerCase();
@@ -185,7 +182,7 @@
                         }
 
                     )
-                }
+                }*/
             }
         }
     }

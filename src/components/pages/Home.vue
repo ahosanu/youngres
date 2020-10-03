@@ -49,8 +49,8 @@
     .content{
         margin: 50px 0;
         .title{
-          font-size: 22px;
-          font-weight: bold;
+          font-size: 21px;
+          font-weight: 600;
           text-transform: capitalize;
         }
 
@@ -61,8 +61,8 @@
         color: #e35219;
       }
       label{
-        font-weight: bold;
-        font-size: 18px;
+        font-weight: 600;
+        font-size: 17px;
       }
     }
 </style>

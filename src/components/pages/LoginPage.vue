@@ -25,6 +25,7 @@
         },
         methods: {
             login(){
+
                 this.$store.dispatch('login', {user: this.userName, password: this.password});
 
             }

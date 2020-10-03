@@ -23,15 +23,24 @@ export default new Vuex.Store({
         },
         login: (state, payload) => {
 
-            if(payload.user === 'admin' && payload.password === '12345') {
+            axios.post("login", {
+                headers: {
+                    user: payload.user,
+                    password: payload.password
+                }
+            }).then(res => {
                 state.userName = 'Teacher 1';
-                state.token = 'Basic c2Fyb2FyOjEyMzQ=';
+                state.token = 'Basic '+res.data.token;
                 state.alert = false;
                 axios.defaults.headers.common['Authorization'] = state.token;
                 localStorage.setItem('token', state.token);
                 router.push('/main');
-            }else
+            }).catch(error => {
                 state.alert = true;
+                console.log(error);
+            });
+
+
         },
         updateSession: (state, payload) => {
             state.userName = payload.user;

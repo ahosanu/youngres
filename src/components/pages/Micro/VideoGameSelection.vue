@@ -50,8 +50,8 @@
                 <br>
                 N Students Play: {{NumPlay}}
                 <br>
-                Country:
-                <img v-for="(item, index) in flag" :key="index" :src="item.flag" :alt="item.name" class="flags">
+              <strong>Country:</strong>
+              <ul><li v-for="(item, index) in country" :key="index">{{item}}</li></ul>
             </div>
         </div>
         <!--<div class="row m-3">
@@ -170,8 +170,9 @@
                 this.chapter = this.result[index].chapters;
                 this.selectedGameVersion = this.result[index].gameVersion;
                 this.selectedChapter = this.chapter[0];
-                var listCountry =this.result[index].contries;
-                this.flag = [];
+                this.country = this.result[index].contries;
+/*                var listCountry =this.result[index].contries;
+this.flag = [];
                 for(var item in listCountry){
                     var name = listCountry[item].trim().toLocaleLowerCase();
 
@@ -182,7 +183,7 @@
                         }
 
                     );
-                }
+                }*/
             }
         }
     }
