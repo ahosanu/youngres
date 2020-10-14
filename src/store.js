@@ -23,14 +23,14 @@ export default new Vuex.Store({
         },
         login: (state, payload) => {
 
-            axios.post("login", {
+            axios.post("login", null, {
                 headers: {
                     user: payload.user,
                     password: payload.password
                 }
             }).then(res => {
                 state.userName = 'Teacher 1';
-                state.token = 'Basic '+res.data.token;
+                state.token = 'Bearer '+res.data.token;
                 state.alert = false;
                 axios.defaults.headers.common['Authorization'] = state.token;
                 localStorage.setItem('token', state.token);

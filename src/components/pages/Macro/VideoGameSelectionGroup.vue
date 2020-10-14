@@ -109,7 +109,7 @@
 
 
 
-          axios.get('descriptions/games')
+          axios.get('descriptions/games?limit=20')
               .then(res => {
                 this.result = JSON.parse(res.request.response).games;
                 this.$store.state.selectedData = this.result;
@@ -170,7 +170,7 @@
                 this.selectedGameVersion = this.result[index].gameVersion;
                 this.selectedChapter = this.chapter[0];
 
-                this.country = this.result[index].contries;
+                this.country = this.result[index].countries;
     /*            var listCountry =this.result[index].contries;
                 this.flag = [];
                 for(var item in listCountry){

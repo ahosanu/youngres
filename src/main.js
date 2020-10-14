@@ -28,7 +28,7 @@ import router from './routes';
 import store from './store';
 
 
-axios.defaults.baseURL = 'https://demo2348564.mockable.io/';
+axios.defaults.baseURL = 'http://138.100.158.35:8883/data/';
 axios.defaults.headers.get['accept'] = 'application/json';
 axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 

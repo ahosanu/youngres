@@ -105,22 +105,17 @@
                 chapter:[],
                 description: null,
                 NumPlay: 0,
-                events: [
-                    'event 1',
-                    'event 2',
-                    'event 3',
-                    'event 4',
-                ],
-                selectedChapter: 'C1',
-                selectedGame: 'G1',
-                selectedGameVersion: 'v1',
+                events: [],
+                selectedChapter: '',
+                selectedGame: '',
+                selectedGameVersion: '',
             };
         },
         mounted () {
 
             //Get User ALl events druing initial load
 
-          axios.get('descriptions/games')
+          axios.get('descriptions/games?limit=20')
               .then(res => {
                 this.result = JSON.parse(res.request.response).games;
                 this.$store.state.selectedData = this.result;
@@ -170,7 +165,7 @@
                 this.chapter = this.result[index].chapters;
                 this.selectedGameVersion = this.result[index].gameVersion;
                 this.selectedChapter = this.chapter[0];
-                this.country = this.result[index].contries;
+                this.country = this.result[index].countries;
 /*                var listCountry =this.result[index].contries;
 this.flag = [];
                 for(var item in listCountry){
