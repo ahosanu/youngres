@@ -133,7 +133,7 @@
                 this.$root.$emit('loadFilterHeaderGroup', this.filterHeader);
             },
             filterUpdate(){
-              this.filterHeader = [];
+              this.filterHeader = {};
               if(this.group) {
                 this.filterHeader['group'] = null;
 
@@ -219,9 +219,6 @@
               }else{
                 delete this.filterHeader.student;
               }
-
-              console.log(this.filterHeader);
-
             },
             selectAll(value) {
             var selected = [];

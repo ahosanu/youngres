@@ -153,6 +153,7 @@
               this.getFilterHeader = [];
               this.getFilterHeader = Filter;
               this.submitData();
+
             });
 
 
@@ -190,10 +191,8 @@
             submitData(){
               this.loading = true;
               this.chartDATA = [];
-                var groupOneFilter = this.copy(this.getFilterHeader);
-                var groupTwoFilter =   this.copy(this.getFilterHeader);
-
-
+              var groupOneFilter = this.copy(this.getFilterHeader);
+              var groupTwoFilter = this.copy(this.getFilterHeader);
                 if(this.getFilterHeader === null){
                   groupOneFilter =  {"group": [
                       {
@@ -207,6 +206,7 @@
                         "min_value": this.SelectGroupTwo
                       }
                     ]};
+
                   this.getData(groupOneFilter, groupTwoFilter);
                 }else{
 
@@ -225,9 +225,8 @@
             },
             getData(groupOneFilter, groupTwoFilter){
 
-
-              const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { 'headers': { 'filters': JSON.stringify(groupOneFilter)}});
-              const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { 'headers': { 'filters': JSON.stringify(groupTwoFilter)}});
+              const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter+"&dasd="+groupOneFilter, { headers: { filters: JSON.stringify(groupOneFilter)}});
+              const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupTwoFilter)}});
 
 
               axios.all([requestOne, requestTwo]).then(axios.spread((...responses) => {
@@ -369,7 +368,7 @@
 
 
           },
-            copy (o) { // copy object or array
+          copy (o) { // copy object or array
             let output, v, key;
             output = Array.isArray(o) ? [] : {};
 

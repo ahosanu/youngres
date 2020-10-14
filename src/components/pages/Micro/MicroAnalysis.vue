@@ -95,14 +95,15 @@ import axios from "axios";
                 result: [],
                 chapters: [],
                 filterStudent: [],
-              GroupFilter: []
+                GroupFilter: [],
+                getFilterHeader: null
             }
         },
         mounted(){
 
-            this.type = this.$route.params.type;
+          /*  this.type = this.$route.params.type;
             this.game = this.$route.params.game;
-            this.chapter = this.$route.params.chapter;
+            this.chapter = this.$route.params.chapter;*/
 
 
 
@@ -140,6 +141,13 @@ import axios from "axios";
                 this.submitData();
               });
 
+
+          this.$root.$on('loadFilterHeaderSingle', (Filter) => { // here you need to use the arrow function
+            this.getFilterHeader = [];
+            this.getFilterHeader = Filter;
+            this.submitData();
+
+          });
 
         }
         ,
@@ -183,7 +191,9 @@ import axios from "axios";
             submitData(){
                 this.chartDATA = [];
                 this.loading = true;
-                axios.get("decision").then(res => {
+
+                if(this.getFilterHeader !== null)
+                  axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(this.getFilterHeader)}}).then(res => {
                   this.decisions = JSON.parse(res.request.response);
 
                   this.dataAnalysis();
@@ -203,8 +213,27 @@ import axios from "axios";
 
                   this.loading = false;
                 });
+                else
+                  axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter).then(res => {
+                    this.decisions = JSON.parse(res.request.response);
 
+                    this.dataAnalysis();
 
+                    for(var i=0; i < this.unique_decision_final.length; i++ ) {
+                      this.chartDATA[i] = [];
+                      for(var x=0; x < this.max_choice; x++)
+                        this.chartDATA[i][x] = 0;
+                    }
+                    for(var p =0; p < this.unique_decision_final.length; p++){
+                      var list = this.unique_decision_final[p].choices;
+                      for(var j=0; j < list.length; j++) {
+                        this.chartDATA[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
+                      }
+                    }
+                    this.barChartLoad();
+
+                    this.loading = false;
+                  });
             },
             loadData(){
                 let key = this.game;
