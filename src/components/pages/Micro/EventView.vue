@@ -173,10 +173,10 @@ export default {
       this.loading = true;
 
       const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter);
-      const requestThree = axios.get("descriptions/event");
+      const requestThree = axios.get("descriptions/event?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter+"&eventCode="+this.gameevent);
 
       axios.all([requestOne, requestThree]).then(axios.spread((...responses) => {
-        this.decisions = responses[0].data;
+        this.decisions = responses[0].data.decisions;
         this.result = responses[1].data;
 
         this.dataAnalysis(); //Group One
@@ -243,7 +243,8 @@ export default {
       let uniqueEventListTmp = [];
       for(var i =0; i < this.decisions.length ; i++){
         var item = this.decisions[i];
-        if(item.eventType === 'choice') {
+        //todo: multiple-choice
+        if(item.eventType === 'multiple-choice') {
           var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
           if (filter === -1) {
             uniqueEventList.push(

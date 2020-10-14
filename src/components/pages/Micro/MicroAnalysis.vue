@@ -194,7 +194,7 @@ import axios from "axios";
 
                 if(this.getFilterHeader !== null)
                   axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(this.getFilterHeader)}}).then(res => {
-                  this.decisions = JSON.parse(res.request.response);
+                  this.decisions = res.data;
 
                   this.dataAnalysis();
 
@@ -215,17 +215,20 @@ import axios from "axios";
                 });
                 else
                   axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter).then(res => {
-                    this.decisions = JSON.parse(res.request.response);
-
+                    this.decisions = res.data.decisions;
                     this.dataAnalysis();
-
-                    for(var i=0; i < this.unique_decision_final.length; i++ ) {
+                    for(var i=0; i <= this.unique_decision_final.length; i++ ) {
                       this.chartDATA[i] = [];
                       for(var x=0; x < this.max_choice; x++)
                         this.chartDATA[i][x] = 0;
                     }
+
+
+
                     for(var p =0; p < this.unique_decision_final.length; p++){
                       var list = this.unique_decision_final[p].choices;
+
+
                       for(var j=0; j < list.length; j++) {
                         this.chartDATA[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
                       }
@@ -263,7 +266,8 @@ import axios from "axios";
 
                 for(var i =0; i < this.decisions.length ; i++){
                     var item = this.decisions[i];
-                    if(item.eventType === 'choice') {
+                    //todo: multiple-choice
+                    if(item.eventType === "multiple-choice") {
                         var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
                         if (filter === -1) {
                             uniqueEventList.push(
@@ -309,14 +313,21 @@ import axios from "axios";
                         }
                     }
                 }
+
+
+
+
                 uniqueEventList.forEach((value) => {
                     if(this.max_choice < value.choices.length)
                         this.max_choice = value.choices.length;
                     this.distinct_event.push(value.eventCode);
+
                     value.choices.forEach((ch) => {
                         ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
                     });
                 });
+
+                console.log(uniqueEventList);
                 uniqueEventListTmp.forEach((value) => {
                     this.distinct_event_temp.push(value.eventCode);
                     value.choices.forEach((ch) => {

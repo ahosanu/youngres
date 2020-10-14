@@ -225,17 +225,17 @@
             },
             getData(groupOneFilter, groupTwoFilter){
 
-              const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter+"&dasd="+groupOneFilter, { headers: { filters: JSON.stringify(groupOneFilter)}});
+              const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupOneFilter)}});
               const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupTwoFilter)}});
 
 
               axios.all([requestOne, requestTwo]).then(axios.spread((...responses) => {
                 /*Group One*/
-                this.decisions = responses[0].data;
+                this.decisions = responses[0].data.decisions;
 
                 this.dataAnalysis();
 
-                for(var i=0; i < this.unique_decision_final.length; i++ ) {
+                for(var i=0; i <= this.unique_decision_final.length; i++ ) {
                   this.chartDATA[i] = [];
                   for(var x=0; x < this.max_choice; x++)
                     this.chartDATA[i][x] = 0;
@@ -249,11 +249,11 @@
 
 
                 /*Group Two Data*/
-                this.decisions_two = responses[1].data;
+                this.decisions_two = responses[1].data.decisions;
 
                 this.dataAnalysisTwo();
 
-                for( i=0; i < this.unique_decision_final_two.length; i++ ) {
+                for( i=0; i <= this.unique_decision_final_two.length; i++ ) {
                   this.chartDATATwo[i] = [];
                   for( x=0; x < this.max_choice_two; x++)
                     this.chartDATATwo[i][x] = 0;
@@ -302,7 +302,8 @@
 
             for(var i =0; i < this.decisions.length ; i++){
               var item = this.decisions[i];
-              if(item.eventType === 'choice') {
+              //todo:
+              if(item.eventType === 'multiple-choice') {
                 var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
                 if (filter === -1) {
                   uniqueEventList.push(
@@ -393,7 +394,8 @@
 
             for(var i =0; i < this.decisions_two.length ; i++){
               var item = this.decisions_two[i];
-              if(item.eventType === 'choice') {
+              //todo: multiple-choice
+              if(item.eventType === 'multiple-choice') {
                 var filter = uniqueEventList_two.findIndex((data) => data.eventCode === item.eventCode);
                 if (filter === -1) {
                   uniqueEventList_two.push(
