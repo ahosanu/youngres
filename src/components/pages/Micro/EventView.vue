@@ -16,11 +16,11 @@
           </select>
         </div>
         <div class="col-3">
-          <select class="custom-select" v-if="choice === 'choice'" v-model="gameevent" style="margin-left: 10px;" @change="changeEvent($event)">
+          <select class="custom-select" v-if="choice === 'choice'" v-model="gameevent" style="margin-left: 10px;" @change="loadData($event)">
             <option v-for="(item, index) in distinct_event" :key="index" :value="item">{{item}} </option>
           </select>
 
-          <select class="custom-select" v-if="choice === 'timed'" v-model="gameevent" style="margin-left: 10px;" @change="changeEvent($event)">
+          <select class="custom-select" v-if="choice === 'timed'" v-model="gameevent" style="margin-left: 10px;" @change="loadData($event)">
             <option v-for="(item, index) in distinct_event_temp" :key="index" :value="item">{{item}} </option>
           </select>
         </div>
@@ -52,7 +52,7 @@
                         <strong>Student decisions among possible choices: ({{AnswerList.length}})</strong>
                     <br/>
                     <div class="ans" v-for="(item,index, key) in AnswerList" :key="key">
-                        <p>- Answer 1: “{{item.name}}”.</p>
+                        <p>- Answer {{index+1}} : “{{item.name}}”.</p>
                         <p>Selected by: {{item.percent}}%</p>
                     </div>
                     </span>
@@ -207,13 +207,12 @@ export default {
           if (data.eventCode === key)
             return data;
         });
-
         if (viewEvent.length > 0) {
           viewEvent = viewEvent[0];
           this.AnswerList = viewEvent.choices;
           this.Answers = [];
           for (let i = 0; i < this.AnswerList.length; i++) {
-            this.Answers.push(this.AnswerList[i].percent);
+            this.Answers.push({ name: this.AnswerList[i].name ,  value: this.AnswerList[i].percent});
           }
         }
       }else{
@@ -312,7 +311,12 @@ export default {
           dataAxis.push('Answ ' + (i + 1));
         }
         this.chartData = {
-          tooltip: {},
+          tooltip: {
+            formatter: function (params) {
+              return 'Answer: “'+params.data.name+'” <br/>Selected by: '+
+                  params.value+'% of the students';
+            }
+          },
           xAxis: {
             data: dataAxis,
 

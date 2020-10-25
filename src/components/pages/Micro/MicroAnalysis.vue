@@ -34,17 +34,17 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-9">
+                <div class="col-md-8">
                     <v-chart :options="chartData" width="100%"/>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <p class="sub-title">Click to view Single Event Info:</p>
                     <ul class="eventlist" v-if="choice === 'choice'">
-                        <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}</li>
+                        <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}: {{item.description}}</li>
                     </ul>
 
                     <ul class="eventlist" v-if="choice === 'timed'">
-                        <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item)"> {{item}}</li>
+                        <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.name}}</li>
                     </ul>
                 </div>
             </div>
@@ -101,9 +101,7 @@ import axios from "axios";
         },
         mounted(){
 
-          /*  this.type = this.$route.params.type;
-            this.game = this.$route.params.game;
-            this.chapter = this.$route.params.chapter;*/
+
 
 
 
@@ -119,6 +117,9 @@ import axios from "axios";
           axios.all([requestOne, requestTwo, requestThree ]).then(axios.spread((...responses) => {
             this.$store.state.games = responses[0].data.games;
             this.GroupFilter = responses[1].data
+
+            console.log(this.GroupFilter)
+
             this.filterStudent = responses[2].data
 
             this.groupsList = this.GroupFilter.group_ids;
@@ -191,8 +192,8 @@ import axios from "axios";
             submitData(){
                 this.chartDATA = [];
                 this.loading = true;
+                if(this.getFilterHeader !== null && JSON.stringify(this.getFilterHeader) !== JSON.stringify({}))
 
-                if(this.getFilterHeader !== null)
                   axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(this.getFilterHeader)}}).then(res => {
                   this.decisions = res.data;
 
@@ -204,15 +205,17 @@ import axios from "axios";
                       this.chartDATA[i][x] = 0;
                   }
                   for(var p =0; p < this.unique_decision_final.length; p++){
-                    var list = this.unique_decision_final[p].choices;
+                    var main_data = this.unique_decision_final[p];
+                    var list = main_data.choices;
                     for(var j=0; j < list.length; j++) {
-                      this.chartDATA[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
+                      this.chartDATA[j][p] = { key: list[j].name, description: main_data.description , value: list[j].percent};
                     }
                   }
                   this.barChartLoad();
 
                   this.loading = false;
                 });
+
                 else
                   axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter).then(res => {
                     this.decisions = res.data.decisions;
@@ -226,11 +229,11 @@ import axios from "axios";
 
 
                     for(var p =0; p < this.unique_decision_final.length; p++){
-                      var list = this.unique_decision_final[p].choices;
 
-
+                      var main_data = this.unique_decision_final[p];
+                      var list = main_data.choices;
                       for(var j=0; j < list.length; j++) {
-                        this.chartDATA[j][p] = { key: list[j].name, description: list[j].description , value: list[j].percent};
+                        this.chartDATA[j][p] = { key: list[j].name, description: main_data.description , value: list[j].percent};
                       }
                     }
                     this.barChartLoad();
@@ -270,7 +273,7 @@ import axios from "axios";
                     if(item.eventType === "multiple-choice") {
                         var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
                         if (filter === -1) {
-                            uniqueEventList.push(
+                          uniqueEventList.push(
                                 {
                                     'eventCode': item.eventCode,
                                     'description': item.eventDescription,
@@ -321,15 +324,13 @@ import axios from "axios";
                     if(this.max_choice < value.choices.length)
                         this.max_choice = value.choices.length;
                     this.distinct_event.push(value.eventCode);
-
+                    console.log(value);
                     value.choices.forEach((ch) => {
                         ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
                     });
                 });
-
-                console.log(uniqueEventList);
                 uniqueEventListTmp.forEach((value) => {
-                    this.distinct_event_temp.push(value.eventCode);
+                    this.distinct_event_temp.push({name: value.description, value: value.eventCode});
                     value.choices.forEach((ch) => {
                         this.unique_decision_final_temp.push([value.eventCode, ch, value.description]);
                     });
@@ -355,10 +356,9 @@ import axios from "axios";
                     };
                     this.chartData = {
                         backgroundColor: '#fff',
-
                         tooltip: {
                             formatter: function (params) {
-                                return 'Answer: “'+params.data.key+'” <br/>Selected by: '+
+                                return params.name +': '+params.data.description+'<br>Answer: “'+params.data.key+'” <br/>Selected by: '+
                                     params.value+'% of the students';
                             }
                         },

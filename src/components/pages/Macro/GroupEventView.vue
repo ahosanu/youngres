@@ -16,11 +16,11 @@
           </select>
         </div>
         <div class="col-3">
-          <select class="custom-select" v-if="choice === 'choice'" v-model="gameevent" style="margin-left: 10px;" @change="changeEvent($event)">
+          <select class="custom-select" v-if="choice === 'choice'" v-model="gameevent" style="margin-left: 10px;" @change="loadData($event)">
             <option v-for="(item, index) in distinct_event" :key="index" :value="item">{{item}} </option>
           </select>
 
-          <select class="custom-select" v-if="choice === 'timed'" v-model="gameevent" style="margin-left: 10px;" @change="changeEvent($event)">
+          <select class="custom-select" v-if="choice === 'timed'" v-model="gameevent" style="margin-left: 10px;" @change="loadData($event)">
             <option v-for="(item, index) in distinct_event_temp" :key="index" :value="item">{{item}} </option>
           </select>
         </div>
@@ -51,12 +51,12 @@
               {{item}}
             </li>
           </ul>
-            <strong>Student decisions among possible choices: ({{AnswerList.length}})</strong>
+            <strong>Student decisions among possible choices: ({{possibleChoices.length}})</strong>
                     <br/>
-                    <div class="ans" v-for="(item,index, key) in AnswerList" :key="key">
-                        <p>- Answer 1: “{{item.name}}”.</p>
-                        <p>{{groupOne}} Selected by: {{item.percent}}%</p>
-                        <p>{{groupTwo}} Selected by: {{item.percent}}%</p>
+                    <div class="ans" v-for="(item,index, key) in possibleChoices" :key="key">
+                        <p>- Answer {{index+1}}: “{{item}}”.</p>
+                        <p>{{groupOne}} Selected by: {{possibleChoicesGroupOne[index].value}}%</p>
+                        <p>{{groupTwo}} Selected by: {{possibleChoicesGroupTwo[index].value}}%</p>
                     </div>
                     </span>
           <span v-if="choice === 'timed'">
@@ -141,6 +141,8 @@ export default {
       groupOne: null,
       groupTwo: null,
       possibleChoices: [],
+      possibleChoicesGroupOne: [],
+      possibleChoicesGroupTwo: []
     };
   },
   mounted(){
@@ -175,9 +177,7 @@ export default {
             this.version = res.gameVersion;
           }
 
-
           this.loadData();
-
 
         });
 
@@ -202,11 +202,28 @@ export default {
 
       this.loading = true;
 
-      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter);
-      const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter);
+
+      var groupOneFilter =  {"group": [
+          {
+            "key": "group_id",
+            "min_value": this.groupOne
+          }
+        ]};
+      var groupTwoFilter =  {"group": [
+          {
+            "key": "group_id",
+            "min_value": this.groupTwo
+          }
+        ]};
+
+      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupOneFilter)}});
+      const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupTwoFilter)}});
+
       const requestThree = axios.get("descriptions/event?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter+"&eventCode="+this.gameevent);
 
       axios.all([requestOne, requestTwo, requestThree]).then(axios.spread((...responses) => {
+        this.possibleChoicesGroupOne = [];
+        this.possibleChoicesGroupTwo = [];
         this.decisions = responses[0].data.decisions;
         this.result = responses[2].data;
 
@@ -215,8 +232,69 @@ export default {
         this.highlights = this.result.highlights;
         this.description = this.result.eventDescription;
         this.possibleChoices = this.result.possibleChoices;
+
         this.decisions_two = responses[1].data.decisions;
+
+
         this.dataAnalysisTwo(); //Group One
+
+        this.possibleChoices.forEach((value) => {
+          this.possibleChoicesGroupOne.push({
+            choice: value,
+            EventOneCount: 0,
+            value: 0
+          });
+          this.possibleChoicesGroupTwo.push({
+            choice: value,
+            EventOneCount: 0,
+            value: 0
+          });
+
+        });
+
+
+        this.decisions.forEach((value) => {
+          let i;
+          for(i =0; i < this.distinct_event.length; i++ ){
+            if(value.eventType === "timed" || this.distinct_event[i] === value.eventCode){
+              break;
+            }
+          }
+
+          if( i === this.distinct_event.length)
+            this.distinct_event.push(value.eventCode);
+
+          if(value.eventType === "multiple-choice" && value.eventCode === this.gameevent) {
+            this.possibleChoicesGroupOne.forEach((valuex) => {
+              if(value.choice === valuex.choice)
+                valuex.EventOneCount++;
+            });
+          }
+        });
+        this.decisions_two.forEach((value) => {
+          if(value.eventType === "multiple-choice" && value.eventCode === this.gameevent) {
+            this.possibleChoicesGroupTwo.forEach((valuex) => {
+              if(value.choice === valuex.choice)
+                valuex.EventOneCount++;
+            });
+          }
+        });
+
+        let len = 0;
+        let len_two = 0;
+        this.possibleChoicesGroupOne.forEach((value)=>{
+          len+=value.EventOneCount;
+        });
+        this.possibleChoicesGroupTwo.forEach((value)=>{
+          len_two+=value.EventOneCount;
+        });
+
+        this.possibleChoicesGroupOne.forEach((value)=>{
+          value.value=((value.EventOneCount/len)*100).toFixed(2);
+        });
+        this.possibleChoicesGroupTwo.forEach((value)=>{
+          value.value=((value.EventOneCount/len_two)*100).toFixed(2);
+        });
 
         this.loadEvent();
 
@@ -238,38 +316,8 @@ export default {
     },
     loadEvent(){
       let key = this.gameevent;
-      if(this.choice === 'choice') {
+      if(this.choice !== 'choice') {
 
-        let viewEvent = this.unique_decision_final.filter(function (data) {
-          if (data.eventCode === key)
-            return data;
-        });
-
-        let viewEventTwo = this.unique_decision_final_two.filter(function (data) {
-          if (data.eventCode === key)
-            return data;
-        });
-
-        if (viewEvent.length > 0) {
-          viewEvent = viewEvent[0];
-          this.AnswerList = viewEvent.choices;
-          this.Answers = [];
-          for (let i = 0; i < this.AnswerList.length; i++) {
-            this.Answers.push(this.AnswerList[i].percent);
-          }
-
-        }
-
-        if (viewEventTwo.length > 0) {
-          viewEventTwo = viewEventTwo[0];
-          this.AnswerListTwo = viewEventTwo.choices;
-          this.AnswersTwo = [];
-          for (let i = 0; i < this.AnswerListTwo.length; i++) {
-            this.AnswersTwo.push(this.AnswerListTwo[i].percent);
-          }
-        }
-
-      }else{
         let viewEvent = this.unique_decision_final_temp.filter(function (data) {
           if (data.eventCode === key)
             return data;
@@ -308,36 +356,8 @@ export default {
       for(var i =0; i < this.decisions.length ; i++){
         var item = this.decisions[i];
         //todo: multiple-choice
-        if(item.eventType === 'multiple-choice') {
-          var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
-          if (filter === -1) {
-            uniqueEventList.push(
-                {
-                  'eventCode': item.eventCode,
-                  'totalChoice': 1,
-                  'choices': [
-                    {
-                      name: item.choice,
-                      count: 1,
-                      percent: 0
-                    }
-                  ]
-                });
-          }else{
-            let ch_index = uniqueEventList[filter].choices.findIndex((data) => data.name === item.choice);
-            uniqueEventList[filter].totalChoice++;
+        if(item.eventType !== 'multiple-choice') {
 
-            if(ch_index === -1) {
-              uniqueEventList[filter].choices.push({
-                name: item.choice,
-                count: 1,
-                percent: 0
-              });
-            }else {
-              uniqueEventList[filter].choices[ch_index].count++;
-            }
-          }
-        }else{
           let filter_tmp = uniqueEventListTmp.findIndex((data) => data.eventCode === item.eventCode);
           if (filter_tmp === -1) {
             uniqueEventListTmp.push(
@@ -373,36 +393,7 @@ export default {
       let uniqueEventListTmp = [];
       for(var i =0; i < this.decisions_two.length ; i++){
         var item = this.decisions_two[i];
-        if(item.eventType === 'choice') {
-          var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
-          if (filter === -1) {
-            uniqueEventList.push(
-                {
-                  'eventCode': item.eventCode,
-                  'totalChoice': 1,
-                  'choices': [
-                    {
-                      name: item.choice,
-                      count: 1,
-                      percent: 0
-                    }
-                  ]
-                });
-          }else{
-            let ch_index = uniqueEventList[filter].choices.findIndex((data) => data.name === item.choice);
-            uniqueEventList[filter].totalChoice++;
-
-            if(ch_index === -1) {
-              uniqueEventList[filter].choices.push({
-                name: item.choice,
-                count: 1,
-                percent: 0
-              });
-            }else {
-              uniqueEventList[filter].choices[ch_index].count++;
-            }
-          }
-        }else{
+        if(item.eventType !== 'multiple-choice') {
           let filter_tmp = uniqueEventListTmp.findIndex((data) => data.eventCode === item.eventCode);
           if (filter_tmp === -1) {
             uniqueEventListTmp.push(
@@ -435,15 +426,17 @@ export default {
     barChartLoad(){
       if(this.choice === 'choice') {
         var dataAxis = [];
-        var data = this.Answers;
-        var dataTwo = this.AnswersTwo;
 
-
-        for (var i = 0; i < data.length; i++) {
+        for (var i = 0; i < this.possibleChoices.length; i++) {
           dataAxis.push('Answ ' + (i + 1));
         }
         this.chartData = {
-          tooltip: {},
+          tooltip: {
+            formatter: function (params) {
+              return 'Answer: “'+params.data.choice+'” <br/>Selected by: '+
+                  params.value+'% of the students';
+            }
+          },
           xAxis: {
             data: dataAxis,
 
@@ -481,13 +474,13 @@ export default {
               name: this.groupOne,
               type: 'bar',
               barWidth: 20,
-              data: data
+              data: this.possibleChoicesGroupOne
             },
             {
               name: this.groupTwo,
               type: 'bar',
               barWidth: 20,
-              data: dataTwo
+              data: this.possibleChoicesGroupTwo
             }
           ]
         }

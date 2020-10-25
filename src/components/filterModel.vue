@@ -109,8 +109,23 @@
           this.type = Filter[2] === "single";
 
           if(Filter[0].filters !== undefined) {
-            this.countryList = Filter[0].filters[0].values;
-            this.cityList = Filter[0].filters[1].values;
+
+            if(Filter[0].filters[0].id == "city"){
+              this.cityList = Filter[0].filters[0].values;
+            }else{
+              this.cityList = Filter[0].filters[1].values;
+            }
+
+            if(Filter[0].filters[0].id == "country")
+              this.countryList = Filter[0].filters[0].values;
+            else
+              this.countryList = Filter[0].filters[1].values;
+
+
+
+
+
+
             if(this.type)
               this.groupIdList = Filter[0].group_ids;
           }
