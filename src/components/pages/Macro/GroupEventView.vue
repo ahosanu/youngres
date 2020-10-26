@@ -10,12 +10,12 @@
     <div class="content">
       <p class="title">You have selected:</p>
       <div class="row">
-        <div class="col-3">
+        <div class="col-md-3">
           <select class="custom-select" v-model="chapter" style="margin-left: 10px;" @change="changeChapter($event)">
             <option v-for="(item, index) in chapters" :key="index" :value="item">{{item}} </option>
           </select>
         </div>
-        <div class="col-3">
+        <div class="col-md-3">
           <select class="custom-select" v-if="choice === 'choice'" v-model="gameevent" style="margin-left: 10px;" @change="loadData($event)">
             <option v-for="(item, index) in distinct_event" :key="index" :value="item">{{item}} </option>
           </select>
@@ -24,7 +24,7 @@
             <option v-for="(item, index) in distinct_event_temp" :key="index" :value="item">{{item}} </option>
           </select>
         </div>
-        <div class="col-3">
+        <div class="col-md-3">
 <!--            <button class="btn btn-outline-primary">Filter</button>-->
 
           <button class="btn btn-dark" style="margin-left: 10px" @click="chapterInfo()">Chapter Info</button>
@@ -32,10 +32,10 @@
       </div>
       <br/>
       <div class="row">
-        <div class="col-7">
+        <div class="col-md-7">
           <v-chart :options="chartData"/>
         </div>
-        <div class="col-5">
+        <div class="col-md-5" style="max-height: 450px;overflow-y: auto;">
           <strong>{{gameevent}}:</strong>
           <p>{{description}}</p>
 
@@ -331,14 +331,14 @@ export default {
           viewEvent = viewEvent[0];
           this.Answers_tmp = [];
           for (let i = 0; i < viewEvent.choices.length; i++) {
-            this.Answers_tmp.push(['s'+(i+1),viewEvent.choices[i]]);
+            this.Answers_tmp.push(['s'+(i+1),viewEvent.choices[i], this.groupOne, viewEvent.eventCode]);
           }
         }
         if (viewEventTwo.length > 0) {
           viewEventTwo = viewEventTwo[0];
           this.Answers_tmp_two = [];
           for (let i = 0; i < viewEventTwo.choices.length; i++) {
-            this.Answers_tmp_two.push(['s'+(i+1),viewEventTwo.choices[i]]);
+            this.Answers_tmp_two.push(['s'+(i+1), viewEventTwo.choices[i], this.groupTwo, viewEvent.eventCode]);
           }
         }
         this.getMeanValue();
@@ -433,6 +433,7 @@ export default {
         this.chartData = {
           tooltip: {
             formatter: function (params) {
+
               return 'Answer: “'+params.data.choice+'” <br/>Selected by: '+
                   params.value+'% of the students';
             }
@@ -496,9 +497,13 @@ export default {
             xAxisData.push('s' + (index + 1));
           });
         }
-
+        var des = this.description;
         this.chartData = {
-          tooltip: {},
+          tooltip: {
+            formatter: function (params) {
+              return params.value[2]+'<br/>'+params.value[3]+': '+des+'<br/>Time: '+params.value[1]+'Sec';
+            }
+          },
           xAxis: {
             scale: true,
             data: xAxisData
