@@ -47,13 +47,17 @@
       </div>
       <div class="row">
         <div class="col-md-9">
-          <v-chart :options="chartData"/>
+          <v-chart :options="chartData" @change="loaded()"/>
         </div>
         <div class="col-md-3">
           <p class="sub-title">Click to view Single Event Info:</p>
           <ul class="eventlist" v-if="choice === 'choice'">
             <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}: {{item.description}}</li>
           </ul>
+
+          <div v-if="(unique_decision_final.length === 0 && choice === 'choice') || (distinct_event_temp.length === 0 && choice === 'timed')">
+           No data found.
+          </div>
 
           <ul class="eventlist" v-if="choice === 'timed'">
             <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.name}}</li>
@@ -120,7 +124,9 @@ export default {
       getFilterHeader: null,
       filterStudent: [],
       possibleChoicesGroupOne: [],
-      possibleChoicesGroupTwo: []
+      possibleChoicesGroupTwo: [],
+      nextPageFilterOne: null,
+      nextPageFilterTwo: null,
     }
   },
   mounted(){
@@ -144,7 +150,7 @@ export default {
       this.SelectGroupTwo = this.$route.params.groupTwo;
       this.loadData();
       this.submitData();
-      this.loading = false;
+
 
     })).catch(errors => {
       console.log(errors);
@@ -193,6 +199,8 @@ export default {
     submitData(){
       this.loading = true;
       this.chartDATA = [];
+      this.chartDATATwo = [];
+
       var groupOneFilter = this.copy(this.getFilterHeader);
       var groupTwoFilter = this.copy(this.getFilterHeader);
 
@@ -226,13 +234,25 @@ export default {
       }
 
     },
+    loaded(){
+      alert("ok")
+    },
     getData(groupOneFilter, groupTwoFilter){
+
+
+
+      this.nextPageFilterOne = groupTwoFilter;
+      this.nextPageFilterTwo = groupOneFilter;
 
       const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupOneFilter)}});
       const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupTwoFilter)}});
 
       this.possibleChoicesGroupOne = [];
       this.possibleChoicesGroupTwo = [];
+
+
+
+
 
       axios.all([requestOne, requestTwo]).then(axios.spread((...responses) => {
         /*Group One*/
@@ -450,9 +470,6 @@ export default {
         }
         this.barChartLoad();
 
-        this.loading = false;
-
-
       })).catch(errors => {
         console.log(errors);
       })
@@ -628,34 +645,59 @@ export default {
       uniqueEventList_two.forEach((value) => {
         if(this.max_choice_two < value.choices.length)
           this.max_choice_two = value.choices.length;
+
+
+        let o =0;
+        for(; o < this.distinct_event.length; o++){
+          if(this.distinct_event[o] === value.eventCode)
+            break;
+        }
+        if(o === this.distinct_event.length){
+          this.distinct_event.push(value.eventCode);
+        }
+
+
+
         this.distinct_event_two.push(value.eventCode);
+
         value.choices.forEach((ch) => {
           ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
         });
       });
       uniqueEventListTmp_two.forEach((value) => {
+
         this.distinct_event_temp_two.push(value.eventCode);
+
         value.choices.forEach((ch) => {
+
+
           this.unique_decision_final_temp_two.push([value.eventCode, ch, value.description, this.SelectGroupTwo ,"g2"]);
+
+
         });
       });
 
       this.unique_decision_final_two =  uniqueEventList_two;
 
 
+      console.log( this.unique_decision_final_two)
+
+
+      i=0;
+      for(; i < this.unique_decision_final_two.length; i++){
+        let l=0;
+        for(; l < this.unique_decision_final.length; l++){
+          if(this.unique_decision_final_two[i].eventCode === this.unique_decision_final[l].eventCode)
+            break;
+        }
+        if(l === this.unique_decision_final.length)
+          this.unique_decision_final.push(this.unique_decision_final_two[i]);
+      }
 
     },
     barChartLoad(){
+      this.loading = true;
       if(this.choice === 'choice') {
-        /* var emphasisStyle = {
-             itemStyle: {
-                 barBorderWidth: 1,
-                 shadowBlur: 10,
-                 shadowOffsetX: 0,
-                 shadowOffsetY: 0,
-                 shadowColor: 'rgba(0,0,0,0.5)'
-             }
-         };*/
         this.chartData = {
           backgroundColor: '#fff',
           tooltip: {
@@ -891,7 +933,7 @@ export default {
                   sum = sum + (x * x);
                 }
               });
-              std = sum / (count - 1);
+              std = Math.sqrt(sum / (count - 1));
 
 
 
@@ -912,10 +954,10 @@ export default {
                   sum_two = sum_two + (x * x);
                 }
               });
-              std_two = sum_two / (count_two - 1);
+              std_two = Math.sqrt(sum_two / (count_two - 1));
 
 
-              return Event+' : '+description+'<br/>'+g1+' Avg: ' + mean + 'secs.<br/>'+g1+' Std: ' + std.toFixed(2)+'secs.<br/> '+g2+' Avg: ' + mean_two + 'secs.<br/>'+g2+' Std: ' + std_two.toFixed(2)+'secs.';
+              return Event+' : '+description+'<br/>'+g1+' Avg: ' + mean + ' secs.<br/>'+g1+' Std: ' + std.toFixed(2)+' secs.<br/> '+g2+' Avg: ' + mean_two + ' secs.<br/>'+g2+' Std: ' + std_two.toFixed(2)+' secs.';
             }
           },
           xAxis: {
@@ -946,9 +988,10 @@ export default {
           ]
         };
       }
+      this.loading = false;
     },
     gotoEvent(value){
-      this.$router.push('/main/group/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/'+ this.SelectGroupOne +'/'+ this.SelectGroupTwo +'/MacroAnalysis/' + value + '/'+this.choice+'/EventView');
+      this.$router.push({path: '/main/group/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/'+ this.SelectGroupOne +'/'+ this.SelectGroupTwo +'/MacroAnalysis/' + value + '/'+this.choice+'/EventView', query:  {groupOne: JSON.stringify(this.nextPageFilterOne), groupTwo: JSON.stringify(this.nextPageFilterTwo)}});
     },
     chapterInfo(){
       this.$root.$emit('viewChapterInfo', {

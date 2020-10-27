@@ -35,7 +35,7 @@
         <div class="col-md-7">
           <v-chart :options="chartData"/>
         </div>
-        <div class="col-md-5" style="max-height: 450px;overflow-y: auto;">
+        <div class="col-md-5">
           <strong>{{gameevent}}:</strong>
           <p>{{description}}</p>
 
@@ -46,29 +46,31 @@
 
           <span v-if="choice === 'choice'">
              <strong>Possible Choices: ({{possibleChoices.length}})</strong>
-          <ul>
-            <li class="text-uppercase" v-for="item in possibleChoices" :key="item">
-              {{item}}
-            </li>
-          </ul>
+            <p>
+              <span class="text-uppercase" v-for="(item, index) in possibleChoices" :key="item">
+                {{item}}{{(possibleChoices.length - 1 > index) ? ',' : ''}}
+              </span>
+
+            </p>
+
+
             <strong>Student decisions among possible choices: ({{possibleChoices.length}})</strong>
                     <br/>
                     <div class="ans" v-for="(item,index, key) in possibleChoices" :key="key">
-                        <p>- Answer {{index+1}}: “{{item}}”.</p>
-                        <p>{{groupOne}} Selected by: {{possibleChoicesGroupOne[index].value}}%</p>
-                        <p>{{groupTwo}} Selected by: {{possibleChoicesGroupTwo[index].value}}%</p>
+                        <p>- Answer {{index+1}}: “{{item}}”. {{groupOne}} Selected by: {{possibleChoicesGroupOne[index].value !== 'NaN' ? possibleChoicesGroupOne[index].value : 0}}%
+                        and {{groupTwo}} Selected by: {{possibleChoicesGroupTwo[index].value !== 'NaN' ? possibleChoicesGroupTwo[index].value : 0}}%</p>
                     </div>
                     </span>
           <span v-if="choice === 'timed'">
                     <strong>Statistics:</strong>
 
                     <div class="ans">
-                        <p>{{groupOne}} Mean: {{mean_val}} secs.</p>
+                        <p>{{groupOne}} Mean: {{mean_val !== 'NaN' ? mean_val : 0 }} secs.</p>
                         <p>{{groupOne}} Std: {{std}}  secs.</p>
                     </div>
 
                     <div class="ans">
-                        <p>{{groupTwo}} Mean: {{mean_val_two}} secs.</p>
+                        <p>{{groupTwo}} Mean: {{mean_val_two !== 'NaN' ? mean_val_two : 0}} secs.</p>
                         <p>{{groupTwo}} Std: {{stdTwo}}  secs.</p>
                     </div>
 
@@ -202,22 +204,8 @@ export default {
 
       this.loading = true;
 
-
-      var groupOneFilter =  {"group": [
-          {
-            "key": "group_id",
-            "min_value": this.groupOne
-          }
-        ]};
-      var groupTwoFilter =  {"group": [
-          {
-            "key": "group_id",
-            "min_value": this.groupTwo
-          }
-        ]};
-
-      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupOneFilter)}});
-      const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupTwoFilter)}});
+      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: this.$route.query.groupOne}});
+      const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: this.$route.query.groupTwo}});
 
       const requestThree = axios.get("descriptions/event?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter+"&eventCode="+this.gameevent);
 
@@ -438,6 +426,9 @@ export default {
                   params.value+'% of the students';
             }
           },
+          legend:{
+            data: [this.groupOne, this.groupTwo],
+          },
           xAxis: {
             data: dataAxis,
 
@@ -501,7 +492,7 @@ export default {
         this.chartData = {
           tooltip: {
             formatter: function (params) {
-              return params.value[2]+'<br/>'+params.value[3]+': '+des+'<br/>Time: '+params.value[1]+'Sec';
+              return params.value[2]+'<br/>'+params.value[3]+': '+des+'<br/>Time: '+params.value[1]+' secs.';
             }
           },
           xAxis: {
@@ -516,7 +507,9 @@ export default {
               formatter: '{value} Secs'
             }
           },
-          legend: {},
+          legend: {
+
+          },
           series: [
             {
               name: this.groupOne,
@@ -555,14 +548,14 @@ export default {
         let x = (parseFloat(value[1]) - this.mean_val);
         sum += (x*x);
       });
-      this.std = (sum/(this.Answers_tmp.length - 1)).toFixed(2);
+      this.std = Math.sqrt(sum/(this.Answers_tmp.length - 1)).toFixed(2);
 
       let sumTwo = 0;
       this.Answers_tmp_two.forEach((value) => {
         let z = (parseFloat(value[1]) - this.mean_val_two);
         sumTwo += (z*z);
       });
-      this.stdTwo = (sumTwo/(this.Answers_tmp_two.length - 1)).toFixed(2);
+      this.stdTwo = Math.sqrt(sumTwo/(this.Answers_tmp_two.length - 1)).toFixed(2);
     },
     chapterInfo(){
       this.$root.$emit('viewChapterInfo', {

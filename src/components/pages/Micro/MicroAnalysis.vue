@@ -46,6 +46,9 @@
                     <ul class="eventlist" v-if="choice === 'timed'">
                         <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.name}}</li>
                     </ul>
+                    <div v-if="(unique_decision_final.length === 0 && choice === 'choice') || (distinct_event_temp.length === 0 && choice === 'timed')">
+                      No data found.
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,7 +130,6 @@ import axios from "axios";
             this.SelectGroupTwo = this.$route.params.groupTwo;
             this.loadData();
             this.submitData();
-            this.loading = false;
 
           })).catch(errors => {
             console.log(errors);
@@ -212,8 +214,6 @@ import axios from "axios";
                     }
                   }
                   this.barChartLoad();
-
-                  this.loading = false;
                 });
 
                 else
@@ -237,8 +237,6 @@ import axios from "axios";
                       }
                     }
                     this.barChartLoad();
-
-                    this.loading = false;
                   });
             },
             loadData(){
@@ -513,9 +511,9 @@ import axios from "axios";
                                     let x = (parseFloat(value.data[1]) - mean);
                                     sum = sum + (x*x);
                                 });
-                                std = sum / (params.length - 1);
+                                std = Math.sqrt(sum / (params.length - 1));
 
-                                return Event+' : '+description+'<br/>Avg: ' + mean + 'secs.<br/>Std: ' + std.toFixed(2)+'secs.';
+                                return Event+' : '+description+'<br/>Avg: ' + mean + ' secs.<br/>Std: ' + std.toFixed(2)+' secs.';
                             }
                         },
                         series: [
@@ -526,6 +524,8 @@ import axios from "axios";
                         ]
                     };
                 }
+
+              this.loading = false;
             },
             gotoEvent(value){
                 this.$router.push('/main/single/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis/' + value + '/'+this.choice+'/EventView');

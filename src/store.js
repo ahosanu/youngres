@@ -29,7 +29,7 @@ export default new Vuex.Store({
                     password: payload.password
                 }
             }).then(res => {
-                state.userName = 'Teacher 1';
+                state.userName = 'Teacher';
                 state.token = 'Bearer '+res.data.token;
                 state.alert = false;
                 axios.defaults.headers.common['Authorization'] = state.token;

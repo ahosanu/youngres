@@ -36,7 +36,7 @@
           <v-chart :options="chartData"/>
           <!--<img src="@/assets/image2.png" style="width: 100%;" alt="">-->
         </div>
-        <div class="col-md-5"  style="max-height: 450px;overflow-y: auto;">
+        <div class="col-md-5">
           <strong>{{gameevent}}:</strong>
           <p>{{description}}</p>
 
@@ -44,16 +44,16 @@
           <p v-for="(item, index) in this.highlights" :key="index">{{item}}</p>
           <span v-if="choice === 'choice'">
             <strong>Possible Choices: ({{possibleChoices.length}})</strong>
-          <ul>
-            <li class="text-uppercase" v-for="item in possibleChoices" :key="item">
-              {{item}}
-            </li>
-          </ul>
+          <p>
+              <span class="text-uppercase" v-for="(item, index) in possibleChoices" :key="item">
+                {{item}}{{(possibleChoices.length - 1 > index) ? ',' : ''}}
+              </span>
+
+            </p>
                         <strong>Student decisions among possible choices: ({{AnswerList.length}})</strong>
                     <br/>
                     <div class="ans" v-for="(item,index, key) in AnswerList" :key="key">
-                        <p>- Answer {{index+1}} : “{{item.name}}”.</p>
-                        <p>Selected by: {{item.percent}}%</p>
+                        <p>- Answer {{index+1}} : “{{item.name}}”. Selected by: {{item.percent}}%</p>
                     </div>
                     </span>
           <span v-if="choice === 'timed'">
@@ -367,7 +367,7 @@ export default {
         this.chartData = {
           tooltip: {
             formatter: function (params) {
-              return params.value[2]+': '+des+'<br/>Time: '+params.value[1]+'Sec';
+              return params.value[2]+': '+des+'<br/>Time: '+params.value[1]+' secs.';
             }
           },
           xAxis: {
@@ -404,7 +404,7 @@ export default {
         let x = (parseFloat(value[1]) - this.mean_val);
         sum += (x*x);
       });
-      this.std = (sum/(this.Answers_tmp.length - 1)).toFixed(2);
+      this.std = Math.sqrt(sum/(this.Answers_tmp.length - 1)).toFixed(2);
     },
     chapterInfo(){
       this.$root.$emit('viewChapterInfo', {
