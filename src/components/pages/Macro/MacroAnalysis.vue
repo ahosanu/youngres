@@ -241,8 +241,8 @@ export default {
 
 
 
-      this.nextPageFilterOne = groupTwoFilter;
-      this.nextPageFilterTwo = groupOneFilter;
+      this.nextPageFilterOne = groupOneFilter;
+      this.nextPageFilterTwo = groupTwoFilter;
 
       const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupOneFilter)}});
       const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupTwoFilter)}});
@@ -560,6 +560,7 @@ export default {
       });
       uniqueEventListTmp.forEach((value) => {
         this.distinct_event_temp.push({name: value.description, value: value.eventCode});
+
         value.choices.forEach((ch) => {
           this.unique_decision_final_temp.push([value.eventCode, ch, value.description, this.SelectGroupOne, "g1"]);
         });
@@ -666,23 +667,24 @@ export default {
       });
       uniqueEventListTmp_two.forEach((value) => {
 
+        let i =0;
+        for(; i < this.distinct_event_temp.length ; i++){
+
+          if(this.distinct_event_temp[i].value === value.eventCode)
+            break;
+
+        }
+        if(i === this.distinct_event_temp.length)
+          this.distinct_event_temp.push({name: value.description, value: value.eventCode});
+
+
         this.distinct_event_temp_two.push(value.eventCode);
-
         value.choices.forEach((ch) => {
-
-
           this.unique_decision_final_temp_two.push([value.eventCode, ch, value.description, this.SelectGroupTwo ,"g2"]);
-
-
         });
       });
 
       this.unique_decision_final_two =  uniqueEventList_two;
-
-
-      console.log( this.unique_decision_final_two)
-
-
       i=0;
       for(; i < this.unique_decision_final_two.length; i++){
         let l=0;
@@ -697,6 +699,10 @@ export default {
     },
     barChartLoad(){
       this.loading = true;
+
+      var groupOne = this.SelectGroupOne;
+      var groupTwo = this.SelectGroupTwo;
+
       if(this.choice === 'choice') {
         this.chartData = {
           backgroundColor: '#fff',
@@ -913,14 +919,12 @@ export default {
               let mean_two;
               let std_two;
 
-              let g1 ,g2;
 
               params.forEach((value) => {
                 if(value.data[4] === "g1") {
                   sum = sum + parseFloat(value.data[1]);
                   description = value.data[2];
                   Event = value.name;
-                  g1 = value.data[3];
                   count++;
                 }
               });
@@ -941,7 +945,8 @@ export default {
               params.forEach((value) => {
                 if(value.data[4] === "g2") {
                   sum_two = sum_two + parseFloat(value.data[1]);
-                  g2 = value.data[3];
+                  description = value.data[2];
+                  Event = value.name;
                   count_two++;
                 }
               });
@@ -957,7 +962,7 @@ export default {
               std_two = Math.sqrt(sum_two / (count_two - 1));
 
 
-              return Event+' : '+description+'<br/>'+g1+' Avg: ' + mean + ' secs.<br/>'+g1+' Std: ' + std.toFixed(2)+' secs.<br/> '+g2+' Avg: ' + mean_two + ' secs.<br/>'+g2+' Std: ' + std_two.toFixed(2)+' secs.';
+              return Event+' : '+description+'<br/>'+groupOne+' Avg: ' + (mean === 'NaN' ? 0 : mean ) + ' secs.<br/>'+groupOne+' Std: ' + std.toFixed(2)+' secs.<br/> '+groupTwo+' Avg: ' + (mean_two === 'NaN' ? 0 : mean_two ) + ' secs.<br/>'+groupTwo+' Std: ' + std_two.toFixed(2)+' secs.';
             }
           },
           xAxis: {

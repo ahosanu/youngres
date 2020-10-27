@@ -242,6 +242,16 @@ export default {
 
 
         this.decisions.forEach((value) => {
+
+          if(value.eventType === "multiple-choice" && value.eventCode === this.gameevent) {
+            this.possibleChoicesGroupOne.forEach((valuex) => {
+              if(value.choice === valuex.choice)
+                valuex.EventOneCount++;
+            });
+          }
+        });
+        this.decisions_two.forEach((value) => {
+
           let i;
           for(i =0; i < this.distinct_event.length; i++ ){
             if(value.eventType === "timed" || this.distinct_event[i] === value.eventCode){
@@ -252,14 +262,7 @@ export default {
           if( i === this.distinct_event.length)
             this.distinct_event.push(value.eventCode);
 
-          if(value.eventType === "multiple-choice" && value.eventCode === this.gameevent) {
-            this.possibleChoicesGroupOne.forEach((valuex) => {
-              if(value.choice === valuex.choice)
-                valuex.EventOneCount++;
-            });
-          }
-        });
-        this.decisions_two.forEach((value) => {
+
           if(value.eventType === "multiple-choice" && value.eventCode === this.gameevent) {
             this.possibleChoicesGroupTwo.forEach((valuex) => {
               if(value.choice === valuex.choice)
@@ -368,6 +371,7 @@ export default {
           ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
         });
       });
+
       uniqueEventListTmp.forEach((value) => {
         this.distinct_event_temp.push(value.eventCode);
       });
@@ -396,19 +400,36 @@ export default {
           }
         }
       }
+
       uniqueEventList.forEach((value) => {
-       /* if(this.max_choice < value.choices.length)
-          this.max_choice = value.choices.length;*/
+
         this.distinct_event_two.push(value.eventCode);
+
         value.choices.forEach((ch) => {
           ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
         });
+
       });
+
+
+
       uniqueEventListTmp.forEach((value) => {
         this.distinct_event_temp_two.push(value.eventCode);
+
+        i=0;
+        for(; i < this.distinct_event_temp.length; i++){
+          if(this.distinct_event_temp[i] === value.eventCode)
+            break;
+        }
+        if(i === this.distinct_event_temp.length)
+          this.distinct_event_temp.push(value.eventCode);
       });
       this.unique_decision_final_temp_two = uniqueEventListTmp;
       this.unique_decision_final_two =  uniqueEventList;
+
+
+
+
 
     },
     barChartLoad(){
@@ -488,6 +509,7 @@ export default {
             xAxisData.push('s' + (index + 1));
           });
         }
+
         var des = this.description;
         this.chartData = {
           tooltip: {
