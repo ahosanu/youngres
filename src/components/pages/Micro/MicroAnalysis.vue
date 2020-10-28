@@ -511,7 +511,7 @@ import axios from "axios";
                                     let x = (parseFloat(value.data[1]) - mean);
                                     sum = sum + (x*x);
                                 });
-                                std = Math.sqrt(sum / (params.length - 1));
+                                std = Math.sqrt(sum / (params.length));
 
                                 return Event+' : '+description+'<br/>Avg: ' + mean + ' secs.<br/>Std: ' + std.toFixed(2)+' secs.';
                             }

@@ -47,15 +47,15 @@
       </div>
       <div class="row">
         <div class="col-md-9">
-          <v-chart :options="chartData" @change="loaded()"/>
+          <v-chart :options="chartDatas"/>
         </div>
         <div class="col-md-3">
           <p class="sub-title">Click to view Single Event Info:</p>
-          <ul class="eventlist" v-if="choice === 'choice'">
+          <ul class="eventlist" v-if="choice === 'multiple-choice'">
             <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}: {{item.description}}</li>
           </ul>
 
-          <div v-if="(unique_decision_final.length === 0 && choice === 'choice') || (distinct_event_temp.length === 0 && choice === 'timed')">
+          <div v-if="(unique_decision_final.length === 0 && choice === 'multiple-choice') || (distinct_event_temp.length === 0 && choice === 'timed')">
            No data found.
           </div>
 
@@ -93,9 +93,9 @@ export default {
   data: function(){
     return {
       loading: true,
-      chartData: null,
-      Answers: [10, 20 , 50, 15, 50, 80, 25, 30, 80, 95],
-      choice: 'choice',
+      chartDatas: null,
+      Answers: [],
+      choice: 'multiple-choice',
       decisions: [],
       max_choice: 0,
       distinct_event: [],
@@ -127,6 +127,7 @@ export default {
       possibleChoicesGroupTwo: [],
       nextPageFilterOne: null,
       nextPageFilterTwo: null,
+      listData: []
     }
   },
   mounted(){
@@ -233,9 +234,6 @@ export default {
         this.getData(groupOneFilter, groupTwoFilter);
       }
 
-    },
-    loaded(){
-      alert("ok")
     },
     getData(groupOneFilter, groupTwoFilter){
 
@@ -448,6 +446,32 @@ export default {
           for(var j=0; j < list.length; j++) {
             this.chartDATA[j][p] = { key: list[j].name, description: main_data.description , value: list[j].percent};
           }
+
+          this.listData.push(
+              {
+                name: 'bar'+this.SelectGroupOne+p,
+                type: 'bar',
+                stack: 'one',
+                barWidth: '20',
+                label: {
+                  show: true,
+                  position: 'insideBottom',
+
+                  align: 'left',
+                  verticalAlign: 'middle',
+                  rotate: 90,
+                  formatter: this.SelectGroupOne,
+                  fontSize: 12,
+                  rich: {
+                    name: {
+                      textBorderColor: '#ffffff'
+                    }
+                  }
+                },
+                data: this.chartDATA[p]
+              }
+          );
+
         }
 
 
@@ -467,6 +491,30 @@ export default {
           for( j=0; j < list.length; j++) {
             this.chartDATATwo[j][p] = { key: list[j].name, description: main_data.description , value: list[j].percent};
           }
+          this.listData.push(
+              {
+                name: 'bar'+this.SelectGroupTwo+p,
+                type: 'bar',
+                stack: 'two',
+                barWidth: '20',
+                label: {
+                  show: true,
+                  position: 'insideBottom',
+
+                  align: 'left',
+                  verticalAlign: 'middle',
+                  rotate: 90,
+                  formatter: this.SelectGroupTwo,
+                  fontSize: 12,
+                  rich: {
+                    name: {
+                      textBorderColor: '#ffffff'
+                    }
+                  }
+                },
+                data: this.chartDATA[p]
+              }
+          );
         }
         this.barChartLoad();
 
@@ -703,8 +751,8 @@ export default {
       var groupOne = this.SelectGroupOne;
       var groupTwo = this.SelectGroupTwo;
 
-      if(this.choice === 'choice') {
-        this.chartData = {
+      if(this.choice === 'multiple-choice') {
+        this.chartDatas = {
           backgroundColor: '#fff',
           tooltip: {
             formatter: function (params) {
@@ -725,179 +773,10 @@ export default {
               formatter: '{value}%'
             }
           },
-          series: [
-            {
-              name: 'bar',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[0]
-            },
-            {
-              name: 'bar2',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[1]
-            },
-            {
-              name: 'bar3',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[2]
-            },
-            {
-              name: 'bar4',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[3]
-            },
-            {
-              name: 'bar5',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[4]
-            },
-            {
-              name: 'bar6',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[5]
-            },
-            {
-              name: 'bar7',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[6]
-            },
-            {
-              name: 'bar8',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[7]
-            },
-            {
-              name: 'bar9',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[8]
-            },
-            {
-              name: 'bar10',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[9]
-            },
-            {
-              name: 'bar11',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[10]
-            },
-            {
-              name: 'bar12',
-              type: 'bar',
-              stack: 'one',
-              barWidth: '20',
-              data: this.chartDATA[11]
-            },
-            {
-              name: 'bar13',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[0]
-            },
-            {
-              name: 'bar14',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[1]
-            },
-            {
-              name: 'bar15',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[2]
-            },
-            {
-              name: 'bar16',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[3]
-            },
-            {
-              name: 'bar17',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[4]
-            },
-            {
-              name: 'bar18',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[5]
-            },
-            {
-              name: 'bar19',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[6]
-            },
-            {
-              name: 'bar20',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[7]
-            },
-            {
-              name: 'bar21',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[8]
-            },
-            {
-              name: 'bar22',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[9]
-            },
-            {
-              name: 'bar23',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[10]
-            },
-            {
-              name: 'bar24',
-              type: 'bar',
-              stack: 'two',
-              barWidth: '20',
-              data: this.chartDATATwo[11]
-            }
-          ]
+          series: this.listData
         };
       }else{
-        this.chartData = {
+        this.chartDatas = {
           backgroundColor: '#fff',
           tooltip: {
             trigger: 'axis',
@@ -937,7 +816,7 @@ export default {
                   sum = sum + (x * x);
                 }
               });
-              std = Math.sqrt(sum / (count - 1));
+              std = Math.sqrt(sum / (count));
 
 
 
@@ -959,7 +838,7 @@ export default {
                   sum_two = sum_two + (x * x);
                 }
               });
-              std_two = Math.sqrt(sum_two / (count_two - 1));
+              std_two = Math.sqrt(sum_two / (count_two));
 
 
               return Event+' : '+description+'<br/>'+groupOne+' Avg: ' + (mean === 'NaN' ? 0 : mean ) + ' secs.<br/>'+groupOne+' Std: ' + std.toFixed(2)+' secs.<br/> '+groupTwo+' Avg: ' + (mean_two === 'NaN' ? 0 : mean_two ) + ' secs.<br/>'+groupTwo+' Std: ' + std_two.toFixed(2)+' secs.';

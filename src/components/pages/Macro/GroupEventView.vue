@@ -16,7 +16,7 @@
           </select>
         </div>
         <div class="col-md-3">
-          <select class="custom-select" v-if="choice === 'choice'" v-model="gameevent" style="margin-left: 10px;" @change="loadData($event)">
+          <select class="custom-select" v-if="choice === 'multiple-choice'" v-model="gameevent" style="margin-left: 10px;" @change="loadData($event)">
             <option v-for="(item, index) in distinct_event" :key="index" :value="item">{{item}} </option>
           </select>
 
@@ -44,7 +44,7 @@
           <strong>Highlights:</strong>
           <p v-for="(item, index) in this.highlights" :key="index">{{item}}</p>
 
-          <span v-if="choice === 'choice'">
+          <span v-if="choice === 'multiple-choice'">
              <strong>Possible Choices: ({{possibleChoices.length}})</strong>
             <p>
               <span class="text-uppercase" v-for="(item, index) in possibleChoices" :key="item">
@@ -57,8 +57,9 @@
             <strong>Student decisions among possible choices: ({{possibleChoices.length}})</strong>
                     <br/>
                     <div class="ans" v-for="(item,index, key) in possibleChoices" :key="key">
-                        <p>- Answer {{index+1}}: “{{item}}”. {{groupOne}} Selected by: {{possibleChoicesGroupOne[index].value !== 'NaN' ? possibleChoicesGroupOne[index].value : 0}}%
-                        and {{groupTwo}} Selected by: {{possibleChoicesGroupTwo[index].value !== 'NaN' ? possibleChoicesGroupTwo[index].value : 0}}%</p>
+                      <p>- Answer {{index+1}}: “{{item}}”.</p>
+                      <p> {{groupOne}} Selected by: {{possibleChoicesGroupOne[index].value !== 'NaN' ? possibleChoicesGroupOne[index].value : 0}}%</p>
+                      <p> {{groupTwo}} Selected by: {{possibleChoicesGroupTwo[index].value !== 'NaN' ? possibleChoicesGroupTwo[index].value : 0}}%</p>
                     </div>
                     </span>
           <span v-if="choice === 'timed'">
@@ -193,8 +194,79 @@ export default {
       window.print();
     },
     changeChapter(event){
+      this.distinct_event = [];
+      this.distinct_event_temp = [];
+      this.loading = true;
       this.chapter = event.target.value;
-      this.loadData();
+
+      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: this.$route.query.groupOne}});
+      const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: this.$route.query.groupTwo}});
+
+      axios.all([requestOne, requestTwo]).then(axios.spread((...responses) => {
+
+          responses[0].data.decisions.forEach(value => {
+          if(value.eventType === "multiple-choice") {
+            let i = 0;
+            for (; i < this.distinct_event.length; i++) {
+              if(this.distinct_event[i] === value.eventCode){
+                break;
+              }
+            }
+            if(i === this.distinct_event.length)
+              this.distinct_event.push(value.eventCode)
+          }else{
+            let i = 0;
+            for (; i < this.distinct_event_temp.length; i++) {
+              if(this.distinct_event_temp[i] === value.eventCode){
+                break;
+              }
+            }
+            if(i === this.distinct_event_temp.length)
+              this.distinct_event_temp.push(value.eventCode)
+          }
+
+        });
+
+        responses[1].data.decisions.forEach(value => {
+          if(value.eventType === "multiple-choice") {
+            let i = 0;
+            for (; i < this.distinct_event.length; i++) {
+              if(this.distinct_event[i] === value.eventCode){
+                break;
+              }
+            }
+            if(i === this.distinct_event.length)
+              this.distinct_event.push(value.eventCode)
+          }else{
+            let i = 0;
+            for (; i < this.distinct_event_temp.length; i++) {
+              if(this.distinct_event_temp[i] === value.eventCode){
+                break;
+              }
+            }
+            if(i === this.distinct_event_temp.length)
+              this.distinct_event_temp.push(value.eventCode)
+          }
+
+        });
+
+        if(this.choice === "multiple-choice") {
+          if (this.distinct_event.length > 0)
+            this.gameevent = this.distinct_event[0];
+        }else{
+          if (this.distinct_event_temp.length > 0)
+            this.gameevent = this.distinct_event_temp[0];
+        }
+        this.loadData();
+
+      }));
+
+
+
+
+
+
+
     },
     changeEvent(event){
       this.gameevent = event.target.value;
@@ -254,12 +326,11 @@ export default {
 
           let i;
           for(i =0; i < this.distinct_event.length; i++ ){
-            if(value.eventType === "timed" || this.distinct_event[i] === value.eventCode){
+            if(this.distinct_event[i] === value.eventCode){
               break;
             }
           }
-
-          if( i === this.distinct_event.length)
+          if( i === this.distinct_event.length  && value.eventType === this.choice)
             this.distinct_event.push(value.eventCode);
 
 
@@ -270,6 +341,7 @@ export default {
             });
           }
         });
+
 
         let len = 0;
         let len_two = 0;
@@ -286,7 +358,9 @@ export default {
         this.possibleChoicesGroupTwo.forEach((value)=>{
           value.value=((value.EventOneCount/len_two)*100).toFixed(2);
         });
-
+        /*if(this.distinct_event.length > 0) {
+          this.gameevent = this.distinct_event[0];
+        }*/
         this.loadEvent();
 
         this.loading = false;
@@ -294,7 +368,7 @@ export default {
 
       })).catch(errors => {
         console.log(errors);
-      })
+      });
 
     },
     home(){
@@ -307,7 +381,7 @@ export default {
     },
     loadEvent(){
       let key = this.gameevent;
-      if(this.choice !== 'choice') {
+      if(this.choice !== 'multiple-choice') {
 
         let viewEvent = this.unique_decision_final_temp.filter(function (data) {
           if (data.eventCode === key)
@@ -421,7 +495,7 @@ export default {
           if(this.distinct_event_temp[i] === value.eventCode)
             break;
         }
-        if(i === this.distinct_event_temp.length)
+        if(i === this.distinct_event_temp.length && value.eventType === this.choice)
           this.distinct_event_temp.push(value.eventCode);
       });
       this.unique_decision_final_temp_two = uniqueEventListTmp;
@@ -433,12 +507,12 @@ export default {
 
     },
     barChartLoad(){
-      if(this.choice === 'choice') {
-        var dataAxis = [];
+      if(this.choice === 'multiple-choice') {
+        /*var dataAxis = [];
 
         for (var i = 0; i < this.possibleChoices.length; i++) {
           dataAxis.push('Answ ' + (i + 1));
-        }
+        }*/
         this.chartData = {
           tooltip: {
             formatter: function (params) {
@@ -451,7 +525,7 @@ export default {
             data: [this.groupOne, this.groupTwo],
           },
           xAxis: {
-            data: dataAxis,
+            data: this.possibleChoices,
 
             axisTick: {
               show: false
@@ -487,12 +561,42 @@ export default {
               name: this.groupOne,
               type: 'bar',
               barWidth: 20,
+              label: {
+                show: true,
+                position: 'insideBottom',
+
+                align: 'left',
+                verticalAlign: 'middle',
+                rotate: 90,
+                formatter: '{name|{a}}',
+                fontSize: 12,
+                rich: {
+                  name: {
+                    textBorderColor: '#ffffff'
+                  }
+                }
+              },
               data: this.possibleChoicesGroupOne
             },
             {
               name: this.groupTwo,
               type: 'bar',
               barWidth: 20,
+              label: {
+                show: true,
+                position: 'insideBottom',
+
+                align: 'left',
+                verticalAlign: 'middle',
+                rotate: 90,
+                formatter: '{name|{a}}',
+                fontSize: 12,
+                rich: {
+                  name: {
+                    textBorderColor: '#ffffff'
+                  }
+                }
+              },
               data: this.possibleChoicesGroupTwo
             }
           ]
@@ -570,14 +674,14 @@ export default {
         let x = (parseFloat(value[1]) - this.mean_val);
         sum += (x*x);
       });
-      this.std = Math.sqrt(sum/(this.Answers_tmp.length - 1)).toFixed(2);
+      this.std = Math.sqrt(sum/(this.Answers_tmp.length)).toFixed(2);
 
       let sumTwo = 0;
       this.Answers_tmp_two.forEach((value) => {
         let z = (parseFloat(value[1]) - this.mean_val_two);
         sumTwo += (z*z);
       });
-      this.stdTwo = Math.sqrt(sumTwo/(this.Answers_tmp_two.length - 1)).toFixed(2);
+      this.stdTwo = Math.sqrt(sumTwo/(this.Answers_tmp_two.length)).toFixed(2);
     },
     chapterInfo(){
       this.$root.$emit('viewChapterInfo', {

@@ -214,7 +214,28 @@ export default {
           for (let i = 0; i < this.AnswerList.length; i++) {
             this.Answers.push({ name: this.AnswerList[i].name ,  value: this.AnswerList[i].percent});
           }
+
         }
+
+        let k =0;
+        for(; k < this.possibleChoices.length; k++) {
+
+          let i = 0;
+          for (; i < this.AnswerList.length; i++) {
+            if (this.AnswerList[i].name === this.possibleChoices[k])
+            {
+              break;
+            }
+          }
+          if(i === this.AnswerList.length){
+            this.AnswerList.push({
+              name: this.possibleChoices[k],
+              count: 1,
+              percent: 0
+            });
+          }
+        }
+
       }else{
         let viewEvent = this.unique_decision_final_temp.filter(function (data) {
           if (data.eventCode === key)
@@ -304,13 +325,13 @@ export default {
     barChartLoad(){
 
       if(this.choice === 'choice') {
-        var dataAxis = [];
+
         var data = this.Answers;
 
-
+        /*var dataAxis = [];
         for (var i = 0; i < data.length; i++) {
           dataAxis.push('Answ ' + (i + 1));
-        }
+        }*/
         this.chartData = {
           tooltip: {
             formatter: function (params) {
@@ -319,7 +340,7 @@ export default {
             }
           },
           xAxis: {
-            data: dataAxis,
+            data: this.possibleChoices,
 
             axisTick: {
               show: false
@@ -404,7 +425,7 @@ export default {
         let x = (parseFloat(value[1]) - this.mean_val);
         sum += (x*x);
       });
-      this.std = Math.sqrt(sum/(this.Answers_tmp.length - 1)).toFixed(2);
+      this.std = Math.sqrt(sum/(this.Answers_tmp.length)).toFixed(2);
     },
     chapterInfo(){
       this.$root.$emit('viewChapterInfo', {
