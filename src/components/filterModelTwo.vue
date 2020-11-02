@@ -1,6 +1,6 @@
 <template>
-    <modal name="filter" height="auto" class="mymodal">
-        <p style="text-align: center; padding: 20px; font-weight: bold;">Filter</p>
+    <modal name="filterTwo" height="auto" class="mymodal">
+        <p style="text-align: center; padding: 20px; font-weight: bold;">Filter Two</p>
         <div class="row" style="min-height: 310px;">
             <div class="col-md-6">
 
@@ -109,9 +109,9 @@
       },
       mounted(){
 
-        this.$root.$on('loadFilterDate', (Filter) => {
+        this.$root.$on('loadFilterDateTwo', (Filter) => {
           //console.log(Filter);
-          this.type = Filter[2] === "single";
+          this.type = false;
           if(Filter[0].filters !== undefined) {
 
             if(Filter[0].filters[0].id === "city"){
@@ -155,7 +155,7 @@
       }
       , methods:{
             close(){
-                this.$modal.hide('filter');
+                this.$modal.hide('filterTwo');
             },
             limitCheck(){
 
@@ -174,13 +174,9 @@
             },
             filter(){
 
-              this.$modal.hide('filter');
-              if(this.type) {
-                this.$root.$emit('loadFilterHeaderSingle', this.filterHeader);
-              }
-              else {
-                this.$root.$emit('loadFilterHeaderGroup', this.filterHeader);
-                /*this.$root.$emit('loadFilterHeaderGroupTwo', this.filterHeader);*/
+              this.$modal.hide('filterTwo');
+              if(!this.type) {
+                this.$root.$emit('loadFilterHeaderGroupTwo', this.filterHeader);
               }
             },
             filterUpdate(){

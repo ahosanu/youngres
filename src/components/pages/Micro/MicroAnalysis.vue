@@ -194,50 +194,58 @@ import axios from "axios";
             submitData(){
                 this.chartDATA = [];
                 this.loading = true;
-                if(this.getFilterHeader !== null && JSON.stringify(this.getFilterHeader) !== JSON.stringify({}))
+                if(this.getFilterHeader !== null && JSON.stringify(this.getFilterHeader) !== JSON.stringify({})) {
 
-                  axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(this.getFilterHeader)}}).then(res => {
-                  this.decisions = res.data;
-
-                  this.dataAnalysis();
-
-                  for(var i=0; i < this.unique_decision_final.length; i++ ) {
-                    this.chartDATA[i] = [];
-                    for(var x=0; x < this.max_choice; x++)
-                      this.chartDATA[i][x] = 0;
-                  }
-                  for(var p =0; p < this.unique_decision_final.length; p++){
-                    var main_data = this.unique_decision_final[p];
-                    var list = main_data.choices;
-                    for(var j=0; j < list.length; j++) {
-                      this.chartDATA[j][p] = { key: list[j].name, description: main_data.description , value: list[j].percent};
-                    }
-                  }
-                  this.barChartLoad();
-                });
-
-                else
-                  axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter).then(res => {
+                  axios.get("decision?gameCode=" + this.game + "&gameVersion=" + this.version + "&chapterCode=" + this.chapter, {headers: {filters: JSON.stringify(this.getFilterHeader)}}).then(res => {
                     this.decisions = res.data.decisions;
+
                     this.dataAnalysis();
-                    for(var i=0; i <= this.unique_decision_final.length; i++ ) {
+
+                    for (var i = 0; i < this.unique_decision_final.length; i++) {
                       this.chartDATA[i] = [];
-                      for(var x=0; x < this.max_choice; x++)
+                      for (var x = 0; x < this.max_choice; x++)
                         this.chartDATA[i][x] = 0;
                     }
-
-
-
-                    for(var p =0; p < this.unique_decision_final.length; p++){
-
+                    for (var p = 0; p < this.unique_decision_final.length; p++) {
                       var main_data = this.unique_decision_final[p];
                       var list = main_data.choices;
-                      for(var j=0; j < list.length; j++) {
-                        this.chartDATA[j][p] = { key: list[j].name, description: main_data.description , value: list[j].percent};
+                      for (var j = 0; j < list.length; j++) {
+                        this.chartDATA[j][p] = {
+                          key: list[j].name,
+                          description: main_data.description,
+                          value: list[j].percent
+                        };
                       }
                     }
                     this.barChartLoad();
                   });
+
+                }else {
+                  axios.get("decision?gameCode=" + this.game + "&gameVersion=" + this.version + "&chapterCode=" + this.chapter).then(res => {
+                    this.decisions = res.data.decisions;
+                    this.dataAnalysis();
+                    for (var i = 0; i <= this.unique_decision_final.length; i++) {
+                      this.chartDATA[i] = [];
+                      for (var x = 0; x < this.max_choice; x++)
+                        this.chartDATA[i][x] = 0;
+                    }
+
+
+                    for (var p = 0; p < this.unique_decision_final.length; p++) {
+
+                      var main_data = this.unique_decision_final[p];
+                      var list = main_data.choices;
+                      for (var j = 0; j < list.length; j++) {
+                        this.chartDATA[j][p] = {
+                          key: list[j].name,
+                          description: main_data.description,
+                          value: list[j].percent
+                        };
+                      }
+                    }
+                    this.barChartLoad();
+                  });
+                }
             },
             loadData(){
                 let key = this.game;
@@ -528,7 +536,10 @@ import axios from "axios";
               this.loading = false;
             },
             gotoEvent(value){
-                this.$router.push('/main/single/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis/' + value + '/'+this.choice+'/EventView');
+                if(this.getFilterHeader === null || JSON.stringify(this.getFilterHeader) === "{}")
+                  this.$router.push({path:'/main/single/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis/' + value + '/'+this.choice+'/EventView'});
+                else
+                  this.$router.push({path:'/main/single/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/MicroAnalysis/' + value + '/'+this.choice+'/EventView', query:  {filter: JSON.stringify(this.getFilterHeader)}});
             }
         }
     }

@@ -1,6 +1,7 @@
 <template>
     <div class="container">
         <filter-view></filter-view>
+        <filter-view-two></filter-view-two>
         <chapter-info></chapter-info>
         <router-view></router-view>
     </div>
@@ -14,10 +15,12 @@
 
    import filterModel from "@/components/filterModel";
    import ChapterInfoModal from "@/components/pages/ChapterInfoModal";
+   import filterModelTwo from "@/components/filterModelTwo";
 
    export default {
         components:{
             'filter-view': filterModel,
+            'filter-view-two': filterModelTwo,
             'chapter-info': ChapterInfoModal
         },
         data: function(){

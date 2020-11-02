@@ -53,17 +53,17 @@
                 <!--<p style="margin-top: 10px;">filter the events you want to visualize:</p>-->
             </div>
             <div class="col-4">
-                <strong>Description: </strong> {{description}}
+                <strong>Game Description: </strong> {{description}}
                 <br>
                 <br>
                 <br>
                 <br>
-                <strong>Player Info: </strong>
+                <strong>Players Info: </strong>
                 <br>
-                N Students Play: {{NumPlay}}
+              Number of Students Played: {{NumPlay}}
                 <br>
-                <strong>Country:</strong>
-              <ul><li v-for="(item, index) in country" :key="index">{{item}}</li></ul>
+                <strong>Participated Countries:</strong>
+              <ol><li v-for="(item, index) in country" :key="index">{{item}}</li></ol>
             </div>
         </div>
         <div class="row" style="padding: 20px 0">

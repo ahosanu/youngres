@@ -21,29 +21,31 @@
           </select>
         </div>
         <div class="col-md-3">
-          <select class="custom-select" @change="selectChoice($event)">
-            <option selected value="choice">Multiple-choice</option>
+          <select class="custom-select" v-model="choice"  @change="selectChoice($event)">
+            <option selected value="multiple-choice">Multiple-choice</option>
             <option value="timed">Temporal</option>
             <!--<option value="xpe">A specific</option>-->
           </select>
         </div>
         <div class="col-md-5 mt-sm-3 mt-md-0">
-          <button class="btn btn-primary" @click="filter()">Filter</button>
-          <button class="btn btn-success" style="margin-left: 10px" @click="submitData()">Visualize</button>
+          <button class="btn btn-success" style="margin-left: 10px" @click="submit()">Visualize</button>
           <button class="btn btn-dark" style="margin-left: 10px" @click="chapterInfo()">Chapter Info</button>
         </div>
       </div>
       <div class="row mt-3">
-        <div class="col-md-3 offset-2">
+        <div class="col-md-3">
           <select class="custom-select" v-model="SelectGroupOne" >
             <option v-for="(item, index) in groupsList" :key="index" :value="item.group_id">{{item.group_id}} </option>
           </select>
+
         </div>
+        <div class="col-md-1"><button class="btn btn-primary" @click="filterGroupOne()">Filter</button></div>
         <div class="col-md-3">
           <select class="custom-select" v-model="SelectGroupTwo">
             <option v-for="(item, index) in groupsList" :key="index" :value="item.group_id">{{item.group_id}}</option>
           </select>
         </div>
+        <div class="col-md-1"><button class="btn btn-primary" @click="filterGroupTwo()">Filter</button></div>
       </div>
       <div class="row">
         <div class="col-md-9">
@@ -52,16 +54,16 @@
         <div class="col-md-3">
           <p class="sub-title">Click to view Single Event Info:</p>
           <ul class="eventlist" v-if="choice === 'multiple-choice'">
-            <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}: {{item.description}}</li>
+            <li v-for="(item, index, key) in this.choiceList" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.description}}</li>
           </ul>
 
-          <div v-if="(unique_decision_final.length === 0 && choice === 'multiple-choice') || (distinct_event_temp.length === 0 && choice === 'timed')">
+          <div v-if="(this.choiceList.length === 0 && choice === 'multiple-choice') || (this.choiceList.length === 0 && choice === 'timed')">
            No data found.
           </div>
-
+<!--
           <ul class="eventlist" v-if="choice === 'timed'">
             <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.name}}</li>
-          </ul>
+          </ul>-->
         </div>
       </div>
     </div>
@@ -94,26 +96,14 @@ export default {
     return {
       loading: true,
       chartDatas: null,
-      Answers: [],
       choice: 'multiple-choice',
       decisions: [],
       max_choice: 0,
-      distinct_event: [],
-      distinct_event_temp: [],
-      unique_decision_final:[],
-      unique_decision_final_temp:[],
-      max_choice_two: 0,
-      distinct_event_two: [],
-      distinct_event_temp_two: [],
-      unique_decision_final_two:[],
-      unique_decision_final_temp_two:[],
       decisions_two: [],
       type: null,
       game: null,
       version: null,
       chapter: null,
-      chartDATA: [],
-      chartDATATwo: [],
       result: [],
       chapters: [],
       groupsList: [],
@@ -122,12 +112,17 @@ export default {
       GroupFilter: null,
       filterHeader: null,
       getFilterHeader: null,
+      getFilterHeader_two: null,
       filterStudent: [],
-      possibleChoicesGroupOne: [],
-      possibleChoicesGroupTwo: [],
       nextPageFilterOne: null,
       nextPageFilterTwo: null,
-      listData: []
+      listData: [],
+      choiceList: [],
+      choiceList_name: [],
+      unique_decision_final_time_one: [],
+      unique_decision_final_time_two: [],
+      unique_decision_final_one: [],
+      unique_decision_final_two: [],
     }
   },
   mounted(){
@@ -150,19 +145,30 @@ export default {
       this.SelectGroupOne = this.$route.params.groupOne;
       this.SelectGroupTwo = this.$route.params.groupTwo;
       this.loadData();
+
       this.submitData();
-
-
+      this.submitDataTwo();
+      this.getData();
     })).catch(errors => {
       console.log(errors);
     })
 
 
     this.$root.$on('loadFilterHeaderGroup', (Filter) => { // here you need to use the arrow function
-      this.getFilterHeader = [];
+      this.getFilterHeader = {};
       this.getFilterHeader = Filter;
+      //console.log(Filter);
       this.submitData();
+      this.getData();
+    });
 
+
+    this.$root.$on('loadFilterHeaderGroupTwo', (Filter) => { // here you need to use the arrow function
+      this.getFilterHeader_two = {};
+      this.getFilterHeader_two = Filter;
+      //console.log(Filter);
+      this.submitDataTwo();
+      this.getData();
     });
 
 
@@ -175,10 +181,16 @@ export default {
     home(){
       this.$router.push('/main');
     },
-    filter(){
+    filterGroupOne(){
 
       this.$root.$emit('loadFilterDate', [this.GroupFilter, this.filterStudent, "group"]);
       this.$modal.show('filter');
+
+    },
+    filterGroupTwo(){
+
+      this.$root.$emit('loadFilterDateTwo', [this.GroupFilter, this.filterStudent, "group"]);
+      this.$modal.show('filterTwo');
 
     },
     back(){
@@ -197,56 +209,104 @@ export default {
       this.chapter = event.target.value;
 
     },
+    submit(){
+      this.submitData();
+      this.submitDataTwo();
+      this.getData();
+    },
     submitData(){
       this.loading = true;
-      this.chartDATA = [];
-      this.chartDATATwo = [];
 
-      var groupOneFilter = this.copy(this.getFilterHeader);
-      var groupTwoFilter = this.copy(this.getFilterHeader);
 
       if(this.getFilterHeader === null || JSON.stringify(this.getFilterHeader) === JSON.stringify({})){
-        groupOneFilter =  {"group": [
+        this.getFilterHeader =  {"group": [
             {
               "key": "group_id",
               "min_value": this.SelectGroupOne
             }
           ]};
-        groupTwoFilter =  {"group": [
+
+      }else{
+
+        if(this.getFilterHeader.group !== undefined){
+
+          if(this.getFilterHeader.group === null)
+            this.getFilterHeader.group = [];
+          let i =0;
+         for( ;i < this.getFilterHeader.group.length; i++){
+           if(this.getFilterHeader.group[i].min_value === this.SelectGroupOne && this.getFilterHeader.group[i].key === "group_id")
+             break;
+         }
+
+         if(i === this.getFilterHeader.group.length){
+           this.getFilterHeader.group.push({
+             "key": "group_id",
+             "min_value": this.SelectGroupOne
+           });
+         }
+
+        }else {
+          this.getFilterHeader.group = [];
+          this.getFilterHeader.group.push({
+            "key": "group_id",
+            "min_value": this.SelectGroupOne
+          });
+        }
+
+
+      }
+
+
+    },
+    submitDataTwo(){
+      this.loading = true;
+      if(this.getFilterHeader_two === null || JSON.stringify(this.getFilterHeader_two) === JSON.stringify({})){
+        this.getFilterHeader_two =  {"group": [
             {
               "key": "group_id",
               "min_value": this.SelectGroupTwo
             }
           ]};
 
-        this.getData(groupOneFilter, groupTwoFilter);
       }else{
 
-        groupTwoFilter.group.push({
-          "key": "group_id",
-          "min_value": this.SelectGroupTwo
-        });
+        if(this.getFilterHeader_two.group !== undefined){
 
-        groupOneFilter.group.push({
-          "key": "group_id",
-          "min_value": this.SelectGroupOne
-        });
-        this.getData(groupOneFilter, groupTwoFilter);
+          if(this.getFilterHeader_two.group === null)
+            this.getFilterHeader_two.group = [];
+          let i =0;
+          for( ;i < this.getFilterHeader_two.group.length; i++){
+            if(this.getFilterHeader_two.group[i].min_value === this.SelectGroupTwo && this.getFilterHeader_two.group[i].key === "group_id")
+              break;
+          }
+
+          if(i === this.getFilterHeader_two.group.length){
+            this.getFilterHeader_two.group.push({
+              "key": "group_id",
+              "min_value": this.SelectGroupTwo
+            });
+          }
+
+        }else {
+          this.getFilterHeader_two.group = [];
+          this.getFilterHeader_two.group.push({
+            "key": "group_id",
+            "min_value": this.SelectGroupTwo
+          });
+        }
+
+
       }
 
+
+
     },
-    getData(groupOneFilter, groupTwoFilter){
+    getData(){
 
+      this.filterCheck();
 
-
-      this.nextPageFilterOne = groupOneFilter;
-      this.nextPageFilterTwo = groupTwoFilter;
-
-      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupOneFilter)}});
-      const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(groupTwoFilter)}});
-
-      this.possibleChoicesGroupOne = [];
-      this.possibleChoicesGroupTwo = [];
+      const requestOne = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(this.getFilterHeader)}});
+      const requestTwo = axios.get("decision?gameCode="+this.game+"&gameVersion="+this.version+"&chapterCode="+this.chapter, { headers: { filters: JSON.stringify(this.getFilterHeader_two)}});
 
 
 
@@ -256,266 +316,165 @@ export default {
         /*Group One*/
         this.decisions = responses[0].data.decisions;
         this.decisions_two = responses[1].data.decisions;
-
-        /*for(let i = 0; i < this.decisions.length ; i++){
-          let value = this.decisions[i];
-          if(value.eventType === "multiple-choice") {
-
-            let xl;
-            let X_len = this.possibleChoicesGroupOne.length;
-            for(xl = 0; xl < X_len; xl++) {
-
-              if (this.possibleChoicesGroupOne[xl].eventCode === value.eventCode) {
-
-                let len = this.possibleChoicesGroupOne[xl].choice.length;
-
-                let ip;
-                for (ip = 0; ip < len; ip++) {
-                  if (this.possibleChoicesGroupOne[xl].choice[ip] === value.choice) {
-                    break;
-                  }
-                }
-                if (len === ip) {
-                  this.possibleChoicesGroupOne[xl].choice.push({
-                    choice: value.choice,
-                    EventOneCount: 1,
-                    EventOneCode: value.eventCode,
-                    EventOneDesc: value.eventDescription,
-                    percent: 0
-                  });
-
-                  this.possibleChoicesGroupTwo[xl].choice.push({
-                    choice: value.choice,
-                    EventOneCount: 0,
-                    EventOneCode: value.eventCode,
-                    EventOneDesc: value.eventDescription,
-                    percent: 0
-                  });
-                } else {
-                  this.possibleChoicesGroupOne[xl].choice[ip].EventOneCount++;
-                }
-
-                break;
-              }
-            }
-
-            if(xl === X_len){
-              this.possibleChoicesGroupOne.push({
-                eventCode: value.eventCode,
-                choice: [
-                  {
-                    choice: value.choice,
-                    EventOneCount: 1,
-                    EventOneCode: value.eventCode,
-                    EventOneDesc: value.eventDescription,
-                    percent: 0
-                  }
-                ]
-              });
-
-              this.possibleChoicesGroupTwo.push({
-                eventCode: value.eventCode,
-                choice: [
-                  {
-                    choice: value.choice,
-                    EventOneCount: 0,
-                    EventOneCode: value.eventCode,
-                    EventOneDesc: value.eventDescription,
-                    percent: 0
-                  }
-                ]
-              });
-            }
-          }
-        }
-
-        for(let i = 0; i < this.decisions_two.length ; i++){
-          let value = this.decisions_two[i];
-          if(value.eventType === "multiple-choice") {
-
-            let xl;
-            let X_len = this.possibleChoicesGroupTwo.length;
-            for(xl = 0; xl < X_len; xl++) {
-
-              if (this.possibleChoicesGroupTwo[xl].eventCode === value.eventCode) {
-
-                let len = this.possibleChoicesGroupTwo[xl].choice.length;
-
-                let ip;
-                for (ip = 0; ip < len; ip++) {
-                  if (this.possibleChoicesGroupTwo[xl].choice[ip] === value.choice) {
-                    break;
-                  }
-                }
-                if (len === ip) {
-                  this.possibleChoicesGroupTwo[xl].choice.push({
-                    choice: value.choice,
-                    EventOneCount: 1,
-                    EventOneCode: value.eventCode,
-                    EventOneDesc: value.eventDescription,
-                    percent: 0
-                  });
-
-                  this.possibleChoicesGroupOne[xl].choice.push({
-                    choice: value.choice,
-                    EventOneCount: 0,
-                    EventOneCode: value.eventCode,
-                    EventOneDesc: value.eventDescription,
-                    percent: 0
-                  });
-                } else {
-                  this.possibleChoicesGroupTwo[xl].choice[ip].EventOneCount++;
-                }
-
-                break;
-              }
-            }
-
-            if(xl === X_len){
-              this.possibleChoicesGroupTwo.push({
-                eventCode: value.eventCode,
-                choice: [
-                  {
-                    choice: value.choice,
-                    EventOneCount: 1,
-                    EventOneCode: value.eventCode,
-                    EventOneDesc: value.eventDescription,
-                    percent: 0
-                  }
-                ]
-              });
-
-              this.possibleChoicesGroupOne.push({
-                eventCode: value.eventCode,
-                choice: [
-                  {
-                    choice: value.choice,
-                    EventOneCount: 0,
-                    EventOneCode: value.eventCode,
-                    EventOneDesc: value.eventDescription,
-                    percent: 0
-                  }
-                ]
-              });
-            }
-          }
-        }
-
-
-
-        this.possibleChoicesGroupOne.forEach((value) => {
-            let len  = 0;
-            value.choice.forEach((value)=>{
-              len+=value.EventOneCount;
-            });
-            value.choice.forEach((value)=>{
-              value.percent = (value.EventOneCount / len) * 100;
-            });
-
-        });
-
-        this.possibleChoicesGroupTwo.forEach((value) => {
-
-          let lenTwo  = 0;
-          value.choice.forEach((value)=>{
-            lenTwo+=value.EventOneCount;
-          });
-
-          value.choice.forEach((value)=>{
-            value.percent = (value.EventOneCount / lenTwo) * 100;
-          });
-        });
-
-
-
-
-        console.log(this.possibleChoicesGroupOne);
-        console.log(this.possibleChoicesGroupTwo);*/
+        this.Choice();
 
         this.dataAnalysis();
-
-        for(var i=0; i <= this.unique_decision_final.length; i++ ) {
-          this.chartDATA[i] = [];
-          for(var x=0; x < this.max_choice; x++)
-            this.chartDATA[i][x] = 0;
-        }
-        for(var p =0; p < this.unique_decision_final.length; p++){
-          var main_data = this.unique_decision_final[p];
-          var list = main_data.choices;
-
-          for(var j=0; j < list.length; j++) {
-            this.chartDATA[j][p] = { key: list[j].name, description: main_data.description , value: list[j].percent};
-          }
-
-          this.listData.push(
-              {
-                name: 'bar'+this.SelectGroupOne+p,
-                type: 'bar',
-                stack: 'one',
-                barWidth: '20',
-                label: {
-                  show: true,
-                  position: 'insideBottom',
-
-                  align: 'left',
-                  verticalAlign: 'middle',
-                  rotate: 90,
-                  formatter: this.SelectGroupOne,
-                  fontSize: 12,
-                  rich: {
-                    name: {
-                      textBorderColor: '#ffffff'
-                    }
-                  }
-                },
-                data: this.chartDATA[p]
-              }
-          );
-
-        }
-
-
-        /*Group Two Data*/
-
-
         this.dataAnalysisTwo();
 
-        for( i=0; i <= this.unique_decision_final_two.length; i++ ) {
-          this.chartDATATwo[i] = [];
-          for( x=0; x < this.max_choice_two; x++)
-            this.chartDATATwo[i][x] = 0;
-        }
-        for( p =0; p < this.unique_decision_final_two.length; p++){
-          main_data = this.unique_decision_final_two[p];
-          list = main_data.choices;
-          for( j=0; j < list.length; j++) {
-            this.chartDATATwo[j][p] = { key: list[j].name, description: main_data.description , value: list[j].percent};
-          }
-          this.listData.push(
-              {
-                name: 'bar'+this.SelectGroupTwo+p,
-                type: 'bar',
-                stack: 'two',
-                barWidth: '20',
-                label: {
-                  show: true,
-                  position: 'insideBottom',
+        this.listData = [];
 
-                  align: 'left',
-                  verticalAlign: 'middle',
-                  rotate: 90,
-                  formatter: this.SelectGroupTwo,
-                  fontSize: 12,
-                  rich: {
-                    name: {
-                      textBorderColor: '#ffffff'
-                    }
-                  }
-                },
-                data: this.chartDATA[p]
+        let group_one = this.copy(this.choiceList_name);
+        let group_two = this.copy(this.choiceList_name);
+        group_one.forEach( value => {
+          this.unique_decision_final_one.forEach(event => {
+            let p = 0;
+            for(;p < event.choice.length; p++){
+              if(event.choice[p].name === value.name) {
+                try {
+                  value.choice.push({
+                    name: event.choice[p].name,
+                    value: event.choice[p].value,
+                    event: event.value,
+                    description: event.choice[p].description,
+                    group: this.SelectGroupOne
+                  });
+                }catch (e) {
+                  e.toString();
+                }
+                break;
               }
-          );
-        }
+            }
+
+            if(p === event.choice.length) {
+              try {
+                value.choice.push({
+                  name: value.name,
+                  value: 0,
+                  event: event.value,
+                  description: value.description,
+                  group: this.SelectGroupOne
+                });
+              }catch (e) {
+                e.toString();
+              }
+            }
+
+          });
+        });
+        group_two.forEach( value => {
+          this.unique_decision_final_two.forEach(event => {
+            let p = 0;
+            for(;p < event.choice.length; p++){
+              if(event.choice[p].name === value.name) {
+                try {
+                  value.choice.push({
+                    name: event.choice[p].name,
+                    value: event.choice[p].value,
+                    event: event.value,
+                    description: event.choice[p].description,
+                    group: this.SelectGroupTwo
+                  });
+                }catch (e) {
+                  e.toString();
+                }
+                break;
+              }
+            }
+
+            if(p === event.choice.length) {
+              try {
+                value.choice.push({
+                  name: value.name,
+                  value: 0,
+                  event: event.value,
+                  description: value.description,
+                  group: this.SelectGroupTwo
+                });
+              }catch (e) {
+                e.toString();
+              }
+            }
+
+          });
+        });
+
+        let i = 0;
+
+        group_one.forEach( value => {
+          i++;
+          if(value.choice !== undefined){
+            /*value.choice.forEach(vr=>{
+              if(vr.group === this.SelectGroupTwo)
+                vr.value = 0;
+            });*/
+            var gr = this.SelectGroupOne;
+            this.listData.push(
+                {
+                  name: this.SelectGroupOne+i,
+                  type: 'bar',
+                  stack: 'one',
+                  barWidth: '20',
+                  label: {
+                    show: true,
+                    position: 'insideBottom',
+
+                    align: 'left',
+                    verticalAlign: 'middle',
+                    rotate: 90,
+                    formatter: function(param) {
+                      return param.data.value ? gr : '';
+                    },
+                    fontSize: 12,
+                    rich: {
+                      name: {
+                        textBorderColor: '#ffffff'
+                      }
+                    }
+                  },
+                  data: value.choice
+                }
+            );
+          }
+
+        });
+        group_two.forEach( value => {
+          i++;
+          if(value.choice !== undefined) {
+            /*value.choice.forEach(vr => {
+              if (vr.group === this.SelectGroupOne)
+                vr.value = 0;
+            });*/
+            var gr = this.SelectGroupTwo;
+            this.listData.push(
+                {
+                  name: this.SelectGroupTwo + i,
+                  type: 'bar',
+                  stack: 'two',
+                  barWidth: '20',
+                  label: {
+                    show: true,
+                    position: 'insideBottom',
+
+                    align: 'left',
+                    verticalAlign: 'middle',
+                    rotate: 90,
+                    formatter: function(param) {
+                      return param.data.value ? gr : '';
+                    },
+                    fontSize: 12,
+                    rich: {
+                      name: {
+                        textBorderColor: '#ffffff'
+                      }
+                    }
+                  },
+                  data: value.choice
+                }
+            );
+          }
+        });
+
+
         this.barChartLoad();
 
       })).catch(errors => {
@@ -541,83 +500,87 @@ export default {
 
     },
     dataAnalysis(){
-      this.distinct_event = [];
-      this.distinct_event_temp = [];
-      let uniqueEventList = [];
-      let uniqueEventListTmp = [];
-      this.unique_decision_final_temp = [];
-      this.unique_decision_final = [];
+      let uniqueEventList = this.copy(this.choiceList);
+      let uniqueEventListTime = [];
 
 
-      for(var i =0; i < this.decisions.length ; i++){
-        var item = this.decisions[i];
-        //todo:
-        if(item.eventType === 'multiple-choice') {
-          var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
-          if (filter === -1) {
-            uniqueEventList.push(
-                {
-                  'eventCode': item.eventCode,
-                  'description': item.eventDescription,
-                  'totalChoice': 1,
-                  'choices': [
-                    {
-                      name: item.choice,
-                      count: 1,
-                      percent: 0
-                    }
-                  ]
+      for(let i =0; i < this.decisions.length;i++){
+        let obj = this.decisions[i];
+        if(obj.eventType === "timed"){
+
+          let e =0;
+          for(; e < uniqueEventListTime.length; e++){
+            if(uniqueEventListTime[e].eventCode === obj.eventCode){
+
+              let obj_event = uniqueEventListTime[e];
+              let x = 0;
+              for(; x < obj_event.choice.length; x++){
+                if(obj_event.choice[x].name === obj.choice){
+                  break;
+                }
+              }
+              if(x === obj_event.choice.length){
+                obj_event.choice.push({
+                  value: obj.choice,
+                  event: obj.eventCode,
+                  description: obj.eventDescription
                 });
-          }else{
-            let ch_index = uniqueEventList[filter].choices.findIndex((data) => data.name === item.choice);
-            uniqueEventList[filter].totalChoice++;
+              }
 
-            if(ch_index === -1) {
-              uniqueEventList[filter].choices.push({
-                name: item.choice,
-                count: 1,
-                percent: 0
-              });
-            }else {
-              uniqueEventList[filter].choices[ch_index].count++;
+              break;
             }
           }
-        }else{
-          let filter_tmp = uniqueEventListTmp.findIndex((data) => data.eventCode === item.eventCode);
-          if (filter_tmp === -1) {
-            uniqueEventListTmp.push(
-                {
-                  'eventCode': item.eventCode,
-                  'description': item.eventDescription,
-                  'choices': [item.choice]
-                });
-          }else{
-            uniqueEventListTmp[filter_tmp].choices.findIndex((data) => data.name === item.choice);
-            uniqueEventListTmp[filter_tmp].choices.push(item.choice);
+          if(e === uniqueEventListTime.length){
+            uniqueEventListTime.push({
+              eventCode: obj.eventCode,
+              group: this.SelectGroupOne,
+              choice: [{
+                value: obj.choice,
+                event: obj.eventCode,
+                description: obj.eventDescription
+              }]
+            });
+
 
           }
+
+
+        }else{
+          let e =0;
+          for(; e < uniqueEventList.length; e++){
+            if(uniqueEventList[e].value === obj.eventCode){
+
+              let obj_event = uniqueEventList[e];
+              let x = 0;
+              for(; x < obj_event.choice.length; x++){
+                if(obj_event.choice[x].name === obj.choice){
+                  obj_event.choice[x].count++;
+                  break;
+                }
+              }
+              break;
+            }
+          }
+
         }
+
+
       }
+
+
       uniqueEventList.forEach((value) => {
-        if(this.max_choice < value.choices.length)
-          this.max_choice = value.choices.length;
-        this.distinct_event.push(value.eventCode);
-        value.choices.forEach((ch) => {
-          ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
-        });
+        let sum = 0;
+        for(let i=0; i < value.choice.length; i++){
+          sum+=value.choice[i].count;
+        }
+        for(let i=0; i < value.choice.length; i++){
+          value.choice[i].value = (value.choice[i].count/sum)*100;
+        }
       });
-      uniqueEventListTmp.forEach((value) => {
-        this.distinct_event_temp.push({name: value.description, value: value.eventCode});
+      // console.log(uniqueEventList)
+     // console.log(uniqueEventListTime)
 
-        value.choices.forEach((ch) => {
-          this.unique_decision_final_temp.push([value.eventCode, ch, value.description, this.SelectGroupOne, "g1"]);
-        });
-      });
-
-      this.unique_decision_final =  uniqueEventList;
-
-
-
+      this.unique_decision_final_one = uniqueEventList;
     },
     copy (o) { // copy object or array
       let output, v, key;
@@ -634,134 +597,294 @@ export default {
       return output;
     },
     dataAnalysisTwo(){
-      this.distinct_event_two = [];
-      this.distinct_event_temp_two = [];
-      let uniqueEventList_two = [];
-      let uniqueEventListTmp_two = [];
-      this.unique_decision_final_temp_two = [];
-      this.unique_decision_final_two = [];
+      let uniqueEventList = this.copy(this.choiceList);
+      let uniqueEventListTime = [];
 
+      for(let i =0; i < this.decisions_two.length;i++){
+        let obj = this.decisions_two[i];
+        if(obj.eventType === "timed"){
 
-      for(var i =0; i < this.decisions_two.length ; i++){
-        var item = this.decisions_two[i];
-        //todo: multiple-choice
-        if(item.eventType === 'multiple-choice') {
-          var filter = uniqueEventList_two.findIndex((data) => data.eventCode === item.eventCode);
-          if (filter === -1) {
-            uniqueEventList_two.push(
-                {
-                  'eventCode': item.eventCode,
-                  'description': item.eventDescription,
-                  'totalChoice': 1,
-                  'choices': [
-                    {
-                      name: item.choice,
-                      count: 1,
-                      percent: 0
-                    }
-                  ]
+          let e =0;
+          for(; e < uniqueEventListTime.length; e++){
+            if(uniqueEventListTime[e].eventCode === obj.eventCode){
+
+              let obj_event = uniqueEventListTime[e];
+              let x = 0;
+              for(; x < obj_event.choice.length; x++){
+                if(obj_event.choice[x].name === obj.choice){
+                  break;
+                }
+              }
+              if(x === obj_event.choice.length){
+                obj_event.choice.push({
+                  value: obj.choice,
+                  event: obj.eventCode,
+                  description: obj.eventDescription
                 });
-          }else{
-            let ch_index = uniqueEventList_two[filter].choices.findIndex((data) => data.name === item.choice);
-            uniqueEventList_two[filter].totalChoice++;
+              }
 
-            if(ch_index === -1) {
-              uniqueEventList_two[filter].choices.push({
-                name: item.choice,
-                count: 1,
-                percent: 0
-              });
-            }else {
-              uniqueEventList_two[filter].choices[ch_index].count++;
+              break;
             }
           }
-        }else{
-          let filter_tmp = uniqueEventListTmp_two.findIndex((data) => data.eventCode === item.eventCode);
-          if (filter_tmp === -1) {
-            uniqueEventListTmp_two.push(
-                {
-                  'eventCode': item.eventCode,
-                  'description': item.eventDescription,
-                  'choices': [item.choice]
-                });
-          }else{
-            uniqueEventListTmp_two[filter_tmp].choices.findIndex((data) => data.name === item.choice);
-            uniqueEventListTmp_two[filter_tmp].choices.push(item.choice);
+          if(e === uniqueEventListTime.length){
+            uniqueEventListTime.push({
+              eventCode: obj.eventCode,
+              group: this.SelectGroupOne,
+              choice: [{
+                value: obj.choice,
+                event: obj.eventCode,
+                description: obj.eventDescription
+              }]
+            });
+
 
           }
+
+
+        }else{
+          let e =0;
+          for(; e < uniqueEventList.length; e++){
+            if(uniqueEventList[e].value === obj.eventCode){
+
+              let obj_event = uniqueEventList[e];
+              let x = 0;
+              for(; x < obj_event.choice.length; x++){
+                if(obj_event.choice[x].name === obj.choice){
+                  obj_event.choice[x].count++;
+                  break;
+                }
+              }
+              break;
+            }
+          }
         }
-      }
-      uniqueEventList_two.forEach((value) => {
-        if(this.max_choice_two < value.choices.length)
-          this.max_choice_two = value.choices.length;
 
 
-        let o =0;
-        for(; o < this.distinct_event.length; o++){
-          if(this.distinct_event[o] === value.eventCode)
-            break;
-        }
-        if(o === this.distinct_event.length){
-          this.distinct_event.push(value.eventCode);
-        }
-
-
-
-        this.distinct_event_two.push(value.eventCode);
-
-        value.choices.forEach((ch) => {
-          ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
-        });
-      });
-      uniqueEventListTmp_two.forEach((value) => {
-
-        let i =0;
-        for(; i < this.distinct_event_temp.length ; i++){
-
-          if(this.distinct_event_temp[i].value === value.eventCode)
-            break;
-
-        }
-        if(i === this.distinct_event_temp.length)
-          this.distinct_event_temp.push({name: value.description, value: value.eventCode});
-
-
-        this.distinct_event_temp_two.push(value.eventCode);
-        value.choices.forEach((ch) => {
-          this.unique_decision_final_temp_two.push([value.eventCode, ch, value.description, this.SelectGroupTwo ,"g2"]);
-        });
-      });
-
-      this.unique_decision_final_two =  uniqueEventList_two;
-      i=0;
-      for(; i < this.unique_decision_final_two.length; i++){
-        let l=0;
-        for(; l < this.unique_decision_final.length; l++){
-          if(this.unique_decision_final_two[i].eventCode === this.unique_decision_final[l].eventCode)
-            break;
-        }
-        if(l === this.unique_decision_final.length)
-          this.unique_decision_final.push(this.unique_decision_final_two[i]);
       }
 
+
+      uniqueEventList.forEach((value) => {
+        let sum = 0;
+        for(let i=0; i < value.choice.length; i++){
+          sum+=value.choice[i].count;
+        }
+        for(let i=0; i < value.choice.length; i++){
+          value.choice[i].value = (value.choice[i].count/sum)*100;
+        }
+      });
+     // console.log(uniqueEventList)
+      //console.log(uniqueEventListTime)
+      this.unique_decision_final_two = uniqueEventList;
+
+    },
+    filterCheck(){
+
+      if(this.getFilterHeader.group !== undefined){
+        for(let i=0; i < this.getFilterHeader.group.length; i++){
+          if(this.getFilterHeader.group[i].key === "group_id")
+            this.getFilterHeader.group.splice(i, 1);
+        }
+
+        let q = 0;
+        for( ;q < this.getFilterHeader.group.length; q++){
+          if(this.getFilterHeader.group[q].key === "group_id" && this.getFilterHeader.group[q].min_value === this.SelectGroupOne)
+            break;
+        }
+
+        if(q === this.getFilterHeader.group.length)
+          this.getFilterHeader.group.push({
+            "key": "group_id",
+            "min_value": this.SelectGroupOne
+          });
+
+      }else{
+        this.getFilterHeader.group = [];
+        this.getFilterHeader.group.push({
+          "key": "group_id",
+          "min_value": this.SelectGroupOne
+        });
+      }
+
+      if(this.getFilterHeader_two.group !== undefined){
+        for(let i=0; i < this.getFilterHeader_two.group.length; i++){
+          if(this.getFilterHeader_two.group[i].key === "group_id")
+            this.getFilterHeader_two.group.splice(i, 1);
+        }
+
+        let q = 0;
+        for( ;q < this.getFilterHeader_two.group.length; q++){
+          if(this.getFilterHeader_two.group[q].key === "group_id" && this.getFilterHeader_two.group[q].min_value === this.SelectGroupTwo)
+            break;
+        }
+
+        if(q === this.getFilterHeader_two.group.length)
+          this.getFilterHeader_two.group.push({
+            "key": "group_id",
+            "min_value": this.SelectGroupOne
+          });
+
+      }else{
+        this.getFilterHeader_two.group = [];
+        this.getFilterHeader_two.group.push({
+          key: "group_id",
+          min_value: this.SelectGroupTwo
+        });
+      }
+
+    },
+    Choice(){
+      let choiceList = [];
+      let choiceList_name = [];
+
+      this.decisions.forEach(value=>{
+        if(value.eventType !== "timed"){
+
+          let x =0;
+          for(; x < choiceList_name.length ; x++){
+            if(choiceList_name[x].name === value.choice){
+
+                  break;
+              }
+            }
+
+          if(x === choiceList_name.length)
+            choiceList_name.push({name: value.choice, description: value.eventDescription,  event: value.eventCode,choice: []});
+        }
+      });
+      this.decisions_two.forEach(value=>{
+        if(value.eventType !== "timed"){
+
+          let x =0;
+          for(; x < choiceList_name.length ; x++){
+            if(choiceList_name[x].name === value.choice){
+
+              break;
+            }
+          }
+
+          if(x === choiceList_name.length)
+            choiceList_name.push({name: value.choice, description: value.eventDescription,  event: value.eventCode,choice: []});
+        }
+      });
+
+
+      this.decisions.forEach(value=>{
+        if(value.eventType !== "timed"){
+
+
+
+          let x =0;
+          for(; x < choiceList.length ; x++){
+            if(choiceList[x].value === value.eventCode){
+
+              let c = 0;
+              for(;c < choiceList[x].choice.length; c++){
+                if( choiceList[x].choice[c].name === value.choice)
+                  break;
+              }
+
+              if(choiceList[x].choice.length === c)
+                choiceList[x].choice.push(
+                    {
+                      name: value.choice,
+                      count: 0,
+                      value: 0,
+                      event: value.eventCode,
+                      description: value.eventDescription
+                    }
+                );
+
+              break;
+            }
+          }
+          if(x === choiceList.length)
+            choiceList.push({
+              value: value.eventCode,
+              group: this.SelectGroupTwo,
+              description: value.eventDescription,
+              choice: [{
+                name: value.choice,
+                count: 0,
+                value: 0,
+                event: value.eventCode,
+                description: value.eventDescription
+              }]
+            });
+
+
+
+        }
+      });
+      this.decisions_two.forEach(value=>{
+        if(value.eventType !== "timed"){
+
+          let x =0;
+          for(; x < choiceList.length ; x++){
+            if(choiceList[x].value === value.eventCode){
+
+              let c = 0;
+              for(;c < choiceList[x].choice.length; c++){
+                if( choiceList[x].choice[c].name === value.choice)
+                  break;
+              }
+
+              if(choiceList[x].choice.length === c)
+                choiceList[x].choice.push(
+                    {
+                      name: value.choice,
+                      count: 0,
+                      value: 0,
+                      event: value.eventCode,
+                      description: value.eventDescription
+                    }
+                );
+
+              break;
+            }
+          }
+          if(x === choiceList.length)
+            choiceList.push({
+              value: value.eventCode,
+              description: value.eventDescription,
+              group: this.SelectGroupTwo,
+              choice: [{
+                name: value.choice,
+                count: 0,
+                value: 0,
+                event: value.eventCode,
+                description: value.eventDescription
+              }]
+            });
+
+
+
+        }
+      });
+
+
+      this.choiceList = choiceList;
+      this.choiceList_name = choiceList_name;
+
+      //console.log(choiceList_name)
     },
     barChartLoad(){
       this.loading = true;
 
       var groupOne = this.SelectGroupOne;
       var groupTwo = this.SelectGroupTwo;
-
-      if(this.choice === 'multiple-choice') {
+      console.log(this.choice)
+      if(this.choice === "multiple-choice") {
         this.chartDatas = {
           backgroundColor: '#fff',
           tooltip: {
             formatter: function (params) {
-              return params.name +': '+params.data.description+'<br>Answer: “'+params.data.key+'” <br/>Selected by: '+
+             // console.log(params)
+              return params.data.event +': '+params.data.description+'<br>Answer: “'+params.data.name+'” <br/>Selected by: '+
                   params.value+'% of the students';
             }
           },
           xAxis: {
-            data: this.distinct_event,
+            data: this.choiceList,
             axisLine: {onZero: true},
             splitLine: {show: true},
             splitArea: {show: false}
@@ -862,12 +985,12 @@ export default {
               name: this.groupOne,
               symbolSize: 20,
               type: 'scatter',
-              data: this.unique_decision_final_temp,
+              data: this.unique_decision_final_time_one,
             },
             {
               name: this.groupTwo,
               type: 'scatter',
-              data: this.unique_decision_final_temp_two,
+              data: this.unique_decision_final_time_two,
             }
           ]
         };
@@ -875,7 +998,7 @@ export default {
       this.loading = false;
     },
     gotoEvent(value){
-      this.$router.push({path: '/main/group/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/'+ this.SelectGroupOne +'/'+ this.SelectGroupTwo +'/MacroAnalysis/' + value + '/'+this.choice+'/EventView', query:  {groupOne: JSON.stringify(this.nextPageFilterOne), groupTwo: JSON.stringify(this.nextPageFilterTwo)}});
+      this.$router.push({path: '/main/group/VideoGameSelection/'+this.game+'/'+this.chapter+'/'+this.version+'/'+ this.SelectGroupOne +'/'+ this.SelectGroupTwo +'/MacroAnalysis/' + value + '/'+this.choice+'/EventView', query:  {groupOne: JSON.stringify(this.getFilterHeader), groupTwo: JSON.stringify(this.getFilterHeader_two)}});
     },
     chapterInfo(){
       this.$root.$emit('viewChapterInfo', {
