@@ -60,10 +60,10 @@
           <div v-if="(this.choiceList.length === 0 && choice === 'multiple-choice') || (this.choiceList.length === 0 && choice === 'timed')">
            No data found.
           </div>
-<!--
+
           <ul class="eventlist" v-if="choice === 'timed'">
-            <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.name}}</li>
-          </ul>-->
+            <li v-for="(item, index, key) in time_event_list_name" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.description}}</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -123,6 +123,9 @@ export default {
       unique_decision_final_time_two: [],
       unique_decision_final_one: [],
       unique_decision_final_two: [],
+      time_event_list: [],
+      time_event_list_name: [],
+      time_event_list_two: [],
     }
   },
   mounted(){
@@ -720,7 +723,7 @@ export default {
         if(q === this.getFilterHeader_two.group.length)
           this.getFilterHeader_two.group.push({
             "key": "group_id",
-            "min_value": this.SelectGroupOne
+            "min_value": this.SelectGroupTwo
           });
 
       }else{
@@ -735,6 +738,9 @@ export default {
     Choice(){
       let choiceList = [];
       let choiceList_name = [];
+      let choiceList_name_time = [];
+      this.time_event_list = [];
+      this.time_event_list_two = [];
 
       this.decisions.forEach(value=>{
         if(value.eventType !== "timed"){
@@ -749,6 +755,22 @@ export default {
 
           if(x === choiceList_name.length)
             choiceList_name.push({name: value.choice, description: value.eventDescription,  event: value.eventCode,choice: []});
+        }else {
+          /*
+          * choice": "90",
+                "eventCode": "e.G1.1.2",
+                "eventDescription": "Seconds waiting for your friend?",
+                "eventType": "timed"*/
+          this.time_event_list.push([value.eventCode, value.choice, value.eventDescription, this.SelectGroupOne ,"g1"])
+          let x =0;
+          for(; x < choiceList_name_time.length ; x++){
+            if(choiceList_name_time[x].value === value.eventCode){
+              break;
+            }
+          }
+
+          if(x === choiceList_name_time.length)
+            choiceList_name_time.push({value: value.eventCode, description: value.eventDescription});
         }
       });
       this.decisions_two.forEach(value=>{
@@ -764,6 +786,18 @@ export default {
 
           if(x === choiceList_name.length)
             choiceList_name.push({name: value.choice, description: value.eventDescription,  event: value.eventCode,choice: []});
+        }else {
+
+          this.time_event_list_two.push([value.eventCode, value.choice, value.eventDescription , this.SelectGroupTwo ,"g2"])
+          let x =0;
+          for(; x < choiceList_name_time.length ; x++){
+            if(choiceList_name_time[x].value === value.eventCode){
+              break;
+            }
+          }
+
+          if(x === choiceList_name_time.length)
+            choiceList_name_time.push({value: value.eventCode, description: value.eventDescription});
         }
       });
 
@@ -864,7 +898,7 @@ export default {
 
       this.choiceList = choiceList;
       this.choiceList_name = choiceList_name;
-
+      this.time_event_list_name = choiceList_name_time;
       //console.log(choiceList_name)
     },
     barChartLoad(){
@@ -872,7 +906,7 @@ export default {
 
       var groupOne = this.SelectGroupOne;
       var groupTwo = this.SelectGroupTwo;
-      console.log(this.choice)
+
       if(this.choice === "multiple-choice") {
         this.chartDatas = {
           backgroundColor: '#fff',
@@ -969,7 +1003,7 @@ export default {
           },
           xAxis: {
             scale: true,
-            data: this.distinct_event_temp,
+            data: this.time_event_list_name,
           },
           yAxis: {
             scale: true,
@@ -985,12 +1019,12 @@ export default {
               name: this.groupOne,
               symbolSize: 20,
               type: 'scatter',
-              data: this.unique_decision_final_time_one,
+              data: this.time_event_list,
             },
             {
               name: this.groupTwo,
               type: 'scatter',
-              data: this.unique_decision_final_time_two,
+              data: this.time_event_list_two,
             }
           ]
         };
