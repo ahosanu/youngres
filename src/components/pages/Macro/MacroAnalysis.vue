@@ -403,14 +403,15 @@ export default {
 
         let i = 0;
 
+
+
         group_one.forEach( value => {
           i++;
           if(value.choice !== undefined){
-            /*value.choice.forEach(vr=>{
-              if(vr.group === this.SelectGroupTwo)
-                vr.value = 0;
-            });*/
+
+
             var gr = this.SelectGroupOne;
+
             this.listData.push(
                 {
                   name: this.SelectGroupOne+i,
@@ -425,7 +426,7 @@ export default {
                     verticalAlign: 'middle',
                     rotate: 90,
                     formatter: function(param) {
-                      return param.data.value ? gr : '';
+                      return param.data.value ? gr : '' ;
                     },
                     fontSize: 12,
                     rich: {
@@ -440,13 +441,14 @@ export default {
           }
 
         });
+
         group_two.forEach( value => {
           i++;
+
+
           if(value.choice !== undefined) {
-            /*value.choice.forEach(vr => {
-              if (vr.group === this.SelectGroupOne)
-                vr.value = 0;
-            });*/
+
+
             var gr = this.SelectGroupTwo;
             this.listData.push(
                 {
@@ -577,6 +579,7 @@ export default {
           sum+=value.choice[i].count;
         }
         for(let i=0; i < value.choice.length; i++){
+          if(sum > 0)
           value.choice[i].value = (value.choice[i].count/sum)*100;
         }
       });
@@ -672,7 +675,8 @@ export default {
           sum+=value.choice[i].count;
         }
         for(let i=0; i < value.choice.length; i++){
-          value.choice[i].value = (value.choice[i].count/sum)*100;
+          if(sum > 0)
+              value.choice[i].value = (value.choice[i].count/sum)*100;
         }
       });
      // console.log(uniqueEventList)

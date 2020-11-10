@@ -61,7 +61,7 @@ export default new Vuex.Store({
                 router.push('login');
                 return
             }
-            commit('updateSession', {user: 'Teacher 1', token: token});
+            commit('updateSession', {user: 'Teacher', token: token});
         }
     },
     getters: {

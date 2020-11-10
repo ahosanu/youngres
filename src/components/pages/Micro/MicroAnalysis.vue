@@ -40,11 +40,11 @@
                 <div class="col-md-4">
                     <p class="sub-title">Click to view Single Event Info:</p>
                     <ul class="eventlist" v-if="choice === 'choice'">
-                        <li v-for="(item, index, key) in unique_decision_final" :key="key" @click="gotoEvent(item.eventCode)"> {{item.eventCode}}: {{item.description}}</li>
+                        <li v-for="(item, index, key) in choiceList" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.description}}</li>
                     </ul>
 
                     <ul class="eventlist" v-if="choice === 'timed'">
-                        <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.name}}</li>
+                        <li v-for="(item, index, key) in distinct_event_temp" :key="key" @click="gotoEvent(item.value)"> {{item.value}}: {{item.description}}</li>
                     </ul>
                     <div v-if="(unique_decision_final.length === 0 && choice === 'choice') || (distinct_event_temp.length === 0 && choice === 'timed')">
                       No data found.
@@ -99,7 +99,9 @@ import axios from "axios";
                 chapters: [],
                 filterStudent: [],
                 GroupFilter: [],
-                getFilterHeader: null
+                getFilterHeader: null,
+                choiceList: null,
+                choiceList_name: null
             }
         },
         mounted(){
@@ -120,9 +122,6 @@ import axios from "axios";
           axios.all([requestOne, requestTwo, requestThree ]).then(axios.spread((...responses) => {
             this.$store.state.games = responses[0].data.games;
             this.GroupFilter = responses[1].data
-
-            console.log(this.GroupFilter)
-
             this.filterStudent = responses[2].data
 
             this.groupsList = this.GroupFilter.group_ids;
@@ -146,8 +145,21 @@ import axios from "axios";
 
 
           this.$root.$on('loadFilterHeaderSingle', (Filter) => { // here you need to use the arrow function
-            this.getFilterHeader = [];
-            this.getFilterHeader = Filter;
+            this.getFilterHeader = {};
+            if(Filter.group !== null && Filter.group !== undefined) {
+              if(Filter.student === null )
+                delete  Filter.student;
+
+              this.getFilterHeader = Filter;
+
+            } else if(Filter.student !== null && Filter.student !== undefined) {
+
+              if(Filter.group === null )
+                delete  Filter.group;
+
+              this.getFilterHeader = Filter;
+            }
+
             this.submitData();
 
           });
@@ -192,7 +204,7 @@ import axios from "axios";
 
             },
             submitData(){
-                this.chartDATA = [];
+
                 this.loading = true;
                 if(this.getFilterHeader !== null && JSON.stringify(this.getFilterHeader) !== JSON.stringify({})) {
 
@@ -201,22 +213,7 @@ import axios from "axios";
 
                     this.dataAnalysis();
 
-                    for (var i = 0; i < this.unique_decision_final.length; i++) {
-                      this.chartDATA[i] = [];
-                      for (var x = 0; x < this.max_choice; x++)
-                        this.chartDATA[i][x] = 0;
-                    }
-                    for (var p = 0; p < this.unique_decision_final.length; p++) {
-                      var main_data = this.unique_decision_final[p];
-                      var list = main_data.choices;
-                      for (var j = 0; j < list.length; j++) {
-                        this.chartDATA[j][p] = {
-                          key: list[j].name,
-                          description: main_data.description,
-                          value: list[j].percent
-                        };
-                      }
-                    }
+
                     this.barChartLoad();
                   });
 
@@ -224,25 +221,18 @@ import axios from "axios";
                   axios.get("decision?gameCode=" + this.game + "&gameVersion=" + this.version + "&chapterCode=" + this.chapter).then(res => {
                     this.decisions = res.data.decisions;
                     this.dataAnalysis();
-                    for (var i = 0; i <= this.unique_decision_final.length; i++) {
-                      this.chartDATA[i] = [];
-                      for (var x = 0; x < this.max_choice; x++)
-                        this.chartDATA[i][x] = 0;
-                    }
+                    let i =0;
+                    this.chartDATA = [];
+                    this.unique_decision_final.forEach(value => {
+                      this.chartDATA.push({
+                        name: 'bar'+ i++,
+                        type: 'bar',
+                        stack: 'one',
+                        barWidth: 20,
+                        data: value.choice
+                      });
+                    });
 
-
-                    for (var p = 0; p < this.unique_decision_final.length; p++) {
-
-                      var main_data = this.unique_decision_final[p];
-                      var list = main_data.choices;
-                      for (var j = 0; j < list.length; j++) {
-                        this.chartDATA[j][p] = {
-                          key: list[j].name,
-                          description: main_data.description,
-                          value: list[j].percent
-                        };
-                      }
-                    }
                     this.barChartLoad();
                   });
                 }
@@ -265,84 +255,108 @@ import axios from "axios";
 
             },
             dataAnalysis(){
-                this.distinct_event = [];
                 this.distinct_event_temp = [];
-                let uniqueEventList = [];
-                let uniqueEventListTmp = [];
+
+
                 this.unique_decision_final_temp = [];
                 this.unique_decision_final = [];
+              var eventList = [];
+              var choice = [];
 
 
-                for(var i =0; i < this.decisions.length ; i++){
-                    var item = this.decisions[i];
-                    //todo: multiple-choice
-                    if(item.eventType === "multiple-choice") {
-                        var filter = uniqueEventList.findIndex((data) => data.eventCode === item.eventCode);
-                        if (filter === -1) {
-                          uniqueEventList.push(
-                                {
-                                    'eventCode': item.eventCode,
-                                    'description': item.eventDescription,
-                                    'totalChoice': 1,
-                                    'choices': [
-                                        {
-                                            name: item.choice,
-                                            count: 1,
-                                            percent: 0
-                                        }
-                                    ]
-                                });
-                        }else{
-                            let ch_index = uniqueEventList[filter].choices.findIndex((data) => data.name === item.choice);
-                            uniqueEventList[filter].totalChoice++;
+                this.decisions.forEach(value => {
 
-                            if(ch_index === -1) {
-                                uniqueEventList[filter].choices.push({
-                                    name: item.choice,
-                                    count: 1,
-                                    percent: 0
-                                });
-                            }else {
-                                uniqueEventList[filter].choices[ch_index].count++;
-                            }
-                        }
-                    }else{
-                        let filter_tmp = uniqueEventListTmp.findIndex((data) => data.eventCode === item.eventCode);
-                        if (filter_tmp === -1) {
-                            uniqueEventListTmp.push(
-                                {
-                                    'eventCode': item.eventCode,
-                                    'description': item.eventDescription,
-                                    'choices': [item.choice]
-                                });
-                        }else{
-                            uniqueEventListTmp[filter_tmp].choices.findIndex((data) => data.name === item.choice);
-                            uniqueEventListTmp[filter_tmp].choices.push(item.choice);
-
-                        }
+                  if(value.eventType === 'timed'){
+                    this.unique_decision_final_temp.push([value.eventCode, value.choice, value.eventDescription]);
+                    let t = 0;
+                    for( ; t < this.distinct_event_temp.length; t++){
+                      if(this.distinct_event_temp[t].value === value.eventCode){
+                        break;
+                      }
                     }
+                    if(this.distinct_event_temp.length === t)
+                      this.distinct_event_temp.push({value: value.eventCode, description: value.eventDescription});
+
+
+                  }else{
+                    let i=0;
+                    for (; i < eventList.length; i++){
+
+
+                      if(eventList[i].value === value.eventCode) {
+                        eventList[i].count++;
+                        break;
+                      }
+                    }
+                    if(i === eventList.length)
+                      eventList.push({value: value.eventCode, count: 1, description: value.eventDescription});
+
+
+                    let p = 0;
+                    for (; p < choice.length; p++){
+                      if(choice[p].value === value.choice)
+                        break;
+                    }
+                    if(p === choice.length)
+                      choice.push({value: value.choice, choice: []});
+
+                  }
+
+                });
+
+
+
+              choice.forEach(value => {
+                eventList.forEach(value1 => {
+                  value.choice.push({
+                    value: 0,
+                    name: value.value,
+                    count: 0,
+                    event: value1.value,
+                    description: value1.description
+                  });
+                });
+
+              });
+
+
+              this.decisions.forEach(value => {
+
+                if(value.eventType !== 'timed'){
+
+                  choice.forEach(value1 => {
+
+                    let x = 0;
+                    for(; x < value1.choice.length; x++){
+                      if(value1.choice[x].event === value.eventCode && value1.choice[x].name === value.choice)
+                        value1.choice[x].count++;
+
+                    }
+
+                  });
                 }
 
+              });
 
 
+              choice.forEach(value1 => {
 
-                uniqueEventList.forEach((value) => {
-                    if(this.max_choice < value.choices.length)
-                        this.max_choice = value.choices.length;
-                    this.distinct_event.push(value.eventCode);
-                    console.log(value);
-                    value.choices.forEach((ch) => {
-                        ch.percent = ((ch.count / value.totalChoice) * 100).toFixed(2);
-                    });
-                });
-                uniqueEventListTmp.forEach((value) => {
-                    this.distinct_event_temp.push({name: value.description, value: value.eventCode});
-                    value.choices.forEach((ch) => {
-                        this.unique_decision_final_temp.push([value.eventCode, ch, value.description]);
-                    });
+                value1.choice.forEach(value2 => {
+
+                  let m =0;
+                  for(; m < eventList.length; m++){
+                    if(eventList[m].value === value2.event){
+                      value2.value = (value2.count/eventList[m].count)*100;
+                    }
+                  }
+
                 });
 
-                this.unique_decision_final =  uniqueEventList;
+              });
+
+
+              this.unique_decision_final = choice;
+              this.choiceList = eventList;
 
 
 
@@ -351,26 +365,18 @@ import axios from "axios";
 
 
                 if(this.choice === 'choice') {
-                    var emphasisStyle = {
-                        itemStyle: {
-                            barBorderWidth: 1,
-                            shadowBlur: 10,
-                            shadowOffsetX: 0,
-                            shadowOffsetY: 0,
-                            shadowColor: 'rgba(0,0,0,0.5)'
-                        }
-                    };
                     this.chartData = {
                         backgroundColor: '#fff',
                         tooltip: {
                             formatter: function (params) {
-                                return params.name +': '+params.data.description+'<br>Answer: “'+params.data.key+'” <br/>Selected by: '+
+                              console.log(params)
+                                return params.data.event +': '+params.data.description+'<br>Answer: “'+params.data.name+'” <br/>Selected by: '+
                                     params.value+'% of the students';
                             }
                         },
                         calculable: true,
                         xAxis: {
-                            data: this.distinct_event,
+                            data: this.choiceList,
                             axisLine: {onZero: true},
                             splitLine: {show: true},
                             splitArea: {show: false}
@@ -382,104 +388,7 @@ import axios from "axios";
                                 formatter: '{value}%'
                             }
                         },
-                        series: [
-                            {
-                                name: 'bar',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[0]
-                            },
-                            {
-                                name: 'bar2',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[1]
-                            },
-                            {
-                                name: 'bar3',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[2]
-                            },
-                            {
-                                name: 'bar4',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[3]
-                            },
-                            {
-                                name: 'bar5',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[4]
-                            },
-                            {
-                                name: 'bar6',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[5]
-                            },
-                            {
-                                name: 'bar7',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[6]
-                            },
-                            {
-                                name: 'bar8',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[7]
-                            },
-                            {
-                                name: 'bar9',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[8]
-                            },
-                            {
-                                name: 'bar10',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[9]
-                            },
-                            {
-                                name: 'bar11',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[10]
-                            },
-                            {
-                                name: 'bar12',
-                                type: 'bar',
-                                stack: 'one',
-                                emphasis: emphasisStyle,
-                                barWidth: 20,
-                                data: this.chartDATA[11]
-                            }
-                        ]
+                        series: this.chartDATA
                     };
                 }else{
                     this.chartData = {

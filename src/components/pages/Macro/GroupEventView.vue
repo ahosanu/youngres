@@ -353,14 +353,17 @@ export default {
         });
 
         this.possibleChoicesGroupOne.forEach((value)=>{
-          value.value=((value.EventOneCount/len)*100).toFixed(2);
+          if(len > 0)
+              value.value=((value.EventOneCount/len)*100).toFixed(2);
         });
         this.possibleChoicesGroupTwo.forEach((value)=>{
-          value.value=((value.EventOneCount/len_two)*100).toFixed(2);
+          if(len_two > 0)
+              value.value=((value.EventOneCount/len_two)*100).toFixed(2);
         });
         /*if(this.distinct_event.length > 0) {
           this.gameevent = this.distinct_event[0];
         }*/
+
         this.loadEvent();
 
         this.loading = false;

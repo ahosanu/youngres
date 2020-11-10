@@ -158,8 +158,14 @@
             ,
             selectGame(){
               console.log(this.selectedGame.gameCode);
+              var i = 0;
+              for(; i < this.result.length ; i++){
+                if(this.result[i].gameCode === this.selectedGame.gameCode)
+                  break;
+              }
               this.chapter = this.selectedGame.chapters;
               this.selectedChapter = this.chapter[0];
+              this.loadGameData(i);
             },
             loadGameData(index){
 
